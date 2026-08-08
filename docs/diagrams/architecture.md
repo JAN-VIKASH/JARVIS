@@ -1,9 +1,9 @@
 # Architecture Layers Diagram
 
 * **Last Updated**: 2026-08-08
-* **Current Phase**: Phase 5.3 (Planned / Next)
+* **Current Phase**: Phase 5.3 (User Preferences, Habits & Tasks)
 * **Status**: Freeze
-* **Version**: v0.5.2
+* **Version**: v0.5.3
 
 ---
 
@@ -26,6 +26,7 @@ graph TD
         CS[ChatService]
         VS[VoiceService]
         MS[MemoryService]
+        TS[TaskService]
     end
 
     %% Cognitive Layer
@@ -35,6 +36,8 @@ graph TD
         AR[AliasResolutionEngine]
         PR[PronounResolver]
         CB[ContextBuilder]
+        TE[TimelineEngine]
+        RSE[RecurringScheduleEngine]
     end
 
     %% Core Implementations
@@ -61,6 +64,7 @@ graph TD
     REST --> CS
     
     Factory -->|Resolves| CS
+    Factory -->|Resolves| TS
     VS -->|Injects| STT
     VS -->|Injects| TTS
     VS -->|Injects| CS
@@ -68,12 +72,17 @@ graph TD
     CS --> LLM
     CS --> MS
     CS --> CB
+    CS --> TS
+    CS --> TE
     
     MS --> KG
     MS --> UP
     MS --> AR
     MS --> PR
     
+    TE --> RSE
+    TE --> SQL
+    TS --> SQL
     KG --> SQL
     KG --> Chroma
     UP --> SQL

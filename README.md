@@ -6,9 +6,9 @@ JARVIS is a production-grade, local-first, low-latency personal AI assistant ins
 
 ## Current Status
 
-* **Version**: v0.5.2
-* **Current Implementation Freeze**: Phase 5.2 (Knowledge Graph, User Profiles & Relational Memory)
-* **Current Next Phase**: Phase 5.3 (User Preferences, Habits & Tasks)
+* **Version**: v0.5.3
+* **Current Implementation Freeze**: Phase 5.3 (User Preferences, Habits & Tasks)
+* **Current Next Phase**: Phase 6 (Desktop Automation)
 
 ### Implementation Roadmap Checklist
 - [x] **Phase 1**: Backend Foundation (v0.1)
@@ -19,8 +19,9 @@ JARVIS is a production-grade, local-first, low-latency personal AI assistant ins
 - [x] **Phase 5.1**: Temporal Reasoning & Event Engine (v0.5.1)
 - [x] **Phase 5.1.1**: Event Lifecycle & Timeline Intelligence (v0.5.1.1)
 - [x] **Phase 5.2**: Knowledge Graph, User Profiles & Relational Memory (v0.5.2)
-- [ ] **Phase 5.3**: User Preferences, Habits & Tasks (⚡ *NEXT*)
-- [ ] **Phases 6–12**: Desktop/Browser Automation, Vision, Wake Word, GUI, Multi-Agent, Cloud Sync (⏳ *PLANNED*)
+- [x] **Phase 5.3**: User Preferences, Habits & Tasks (v0.5.3)
+- [ ] **Phase 6**: Desktop Automation (v0.6) (⚡ *NEXT*)
+- [ ] **Phases 7–12**: Browser Automation, Vision, Wake Word, GUI, Multi-Agent, Cloud Sync (⏳ *PLANNED*)
 
 ---
 
@@ -44,6 +45,9 @@ JARVIS has a robust cognitive core, fully equipped with the following production
 * **Multi-hop Graph Reasoning**: Executes BFS pathfinding algorithms up to depth 3 to build logical inferences over related facts.
 * **ContextBuilder & Token Budgeting**: Aggregates contexts in priority order (User Profile > Direct Memories > Semantic Memories > Graph facts > Timeline events) under a strict token threshold (4000 tokens) to prevent context overflows.
 * **BackgroundJobManager**: A multithreaded background queue that offloads expensive secondary LLM extraction tasks (parsing entities, edges, profiles) without blocking the conversational response flow.
+* **Task Management Service**: Enforces session-scoped task lists and status transitions (`pending`, `in_progress`, `completed`, `cancelled`) with derived metadata flags (`is_overdue`/`is_upcoming`).
+* **Timezone-Aware Recurrence Engine**: Computes occurrence date series (daily, weekly, weekday, monthly) with rollover clamping, expanding recurring events on-the-fly inside timeline view ranges.
+* **Habits & Routines Profiling**: Prompts LLM-driven background extractors to add habits and routines directly as structured profile preferences while filtering out isolated occurrences.
 
 ---
 
@@ -56,11 +60,11 @@ Presentation Layer: PTT CLI Console (Desktop GUI is Planned - Phase 10)
        ↓
 API Layer: FastAPI Router Endpoints (chat, health)
        ↓
-Service Layer: Facade Orchestrators (ChatService, VoiceService)
+Service Layer: Facade Orchestrators (ChatService, VoiceService, TaskService)
        ↓
-Cognitive Layer: UserProfileEngine, KnowledgeGraphService, Resolvers
+Cognitive Layer: UserProfileEngine, KnowledgeGraphService, Resolvers, RecurringScheduleEngine
        ↓
-Repository Layer: Entity, Relationship, Alias, Profile, Event Repositories
+Repository Layer: Entity, Relationship, Alias, Profile, Event, Task Repositories
        ↓
 Storage Layer: SQLite (SQLAlchemy 2.0 Async), ChromaDB Vector Store
        ↓
@@ -92,7 +96,7 @@ User Request
   → [UserProfileEngine] fetches structured user profile contexts
   → [PronounResolver] maps pronouns to recent historical entity seeds
   → [KnowledgeGraphService] runs graph expanders over resolved seeds
-  → [TimelineEngine] generates timeline feeds (if schedule query)
+  → [TaskService] and [TimelineEngine] retrieve active tasks and generate timeline feeds (expanding recurrence series)
   → [ContextBuilder] budgets and formats context blocks (up to 4000 tokens)
   → [BaseLLM Provider] (Groq / OpenAI) generates completion
   → [ResponsePostProcessor] and [ResponseValidator] sanitize/constrain answer

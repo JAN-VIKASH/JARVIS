@@ -61,8 +61,8 @@ class ChatService(BaseChatService):
                 )
                 return cached_val
 
-        # 3. Cache Invalidation (if this request updates memory facts/preferences)
-        if intent == "memory_update":
+        # 3. Cache Invalidation (if this request updates memory facts/preferences/tasks)
+        if intent in ("memory_update", "task_create", "task_update", "habit_update"):
             self._response_cache.invalidate_session(session_id)
 
         # 4. Memory Context Retrieval
@@ -214,6 +214,47 @@ class ChatService(BaseChatService):
             else:
                 timeline_context = "No events scheduled or found for this period."
 
+        # 5a. Retrieve Task Context (Phase 5.3)
+        task_context = ""
+        if intent in ("task_query", "task_update", "task_create"):
+            try:
+                from app.services.factory import ServiceFactory
+                task_service = ServiceFactory.get_task_service()
+                
+                q_lower = request.message.lower()
+                status_filter = None
+                if "completed" in q_lower or "done" in q_lower:
+                    status_filter = "completed"
+                elif "cancelled" in q_lower:
+                    status_filter = "cancelled"
+                elif "in progress" in q_lower or "active" in q_lower:
+                    status_filter = "in_progress"
+                elif "pending" in q_lower:
+                    status_filter = "pending"
+                    
+                tasks = await task_service.list_tasks(session_id, status=status_filter)
+                if tasks:
+                    lines = []
+                    for t in tasks:
+                        due_str = t["due_date"].isoformat() if t.get("due_date") else "None"
+                        lines.append(
+                            f"- Task #{t['id']}: {t['title']} (status: {t['status']}, "
+                            f"importance: {t['importance']}, due: {due_str}, "
+                            f"overdue: {t['is_overdue']}, upcoming: {t['is_upcoming']})"
+                        )
+                    task_context = "\n".join(lines)
+                else:
+                    task_context = "No tasks found."
+            except Exception as e:
+                logger.warning(f"Failed to retrieve task context: {e}")
+
+        # Budget Task Context
+        if task_context:
+            if current_chars + len(task_context) <= max_chars:
+                current_chars += len(task_context)
+            else:
+                task_context = ""
+
         system_prompt = self.prompt_builder.build_system_prompt(
             intent=intent,
             long_term_context=long_term_context,
@@ -221,7 +262,8 @@ class ChatService(BaseChatService):
             timeline_context=timeline_context,
             is_voice=request.is_voice,
             profile_context=profile_context,
-            graph_context=graph_context
+            graph_context=graph_context,
+            task_context=task_context
         )
         prompt_latency = time.perf_counter() - prompt_start
 

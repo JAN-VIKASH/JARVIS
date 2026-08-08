@@ -36,7 +36,7 @@ class MemoryConflictResolver:
             
         return False
 
-    async def resolve_and_save(self, m_type: str, category: str, key: str, value: str, confidence: float, score: int) -> Dict[str, Any]:
+    async def resolve_and_save(self, m_type: str, category: str, key: str, value: str, confidence: float, score: int, session_id: str = "default") -> Dict[str, Any]:
         """
         Applies version checking, optimistic locking, and list-row splits to save a fact/preference.
         """
@@ -47,7 +47,7 @@ class MemoryConflictResolver:
             elif m_type == "note":
                 return await self.sqlite_repo.save_note(title=key, content=value, importance=score)
             elif m_type == "task":
-                return await self.sqlite_repo.save_task(title=key, description=value, status="pending", importance=score)
+                return await self.sqlite_repo.save_task(session_id=session_id, title=key, description=value, status="pending", importance=score)
             return {}
 
         is_single = self._is_single_value(category, key)

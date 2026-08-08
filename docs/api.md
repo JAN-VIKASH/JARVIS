@@ -1,6 +1,6 @@
-# JARVIS API & Service Interfaces Reference Manual - Phase 5.2 Freeze
+# JARVIS API & Service Interfaces Reference Manual - Phase 5.3 Freeze
 
-This document describes the external HTTP API endpoints and the internal service interfaces implemented up to Phase 5.2.
+This document describes the external HTTP API endpoints and the internal service interfaces implemented up to Phase 5.3.
 
 ---
 
@@ -93,12 +93,34 @@ These are the primary public programmatic interfaces used within the JARVIS code
     * *Execution Flow*: Modifies values (add/remove lists or set strings) and updates SQLite profiles.
 
 ### 3. `TimelineEngine`
-* **Purpose**: Renders timeline calendar views.
+* **Purpose**: Renders timeline calendar views and expands recurring events dynamically.
 * **Public Methods**:
   * `async generate_timeline(session_id: str, view: str = "daily", start_date: Optional[datetime] = None, sort_by: str = "start_time") -> List[Dict[str, Any]]`:
-    * *Execution Flow*: Queries `EventRepository` based on date parameters, formats text, and returns event dicts.
+    * *Execution Flow*: Queries `EventRepository` based on date parameters, calls `RecurringScheduleEngine` to compute recurring occurrences, formats text, and returns sorted event dicts.
 
-### 4. `GraphExporter` & `GraphImporter`
+### 4. `TaskService`
+* **Purpose**: Coordinates task tracking workflows and enforces status transition rules.
+* **Public Methods**:
+  * `async create_task(session_id: str, title: str, description: Optional[str] = None, status: str = "pending", importance: int = 50, due_date: Optional[datetime] = None) -> Dict[str, Any]`
+  * `async retrieve_task(session_id: str, task_id: int) -> Optional[Dict[str, Any]]`
+  * `async list_tasks(session_id: str, status: Optional[str] = None, include_archived: bool = False) -> List[Dict[str, Any]]`
+  * `async search_tasks(session_id: str, query: str, limit: int = 10) -> List[Dict[str, Any]]`
+  * `async update_task(session_id: str, task_id: int, title: Optional[str] = None, description: Optional[str] = None, importance: Optional[int] = None, due_date: Any = _SENTINEL) -> Dict[str, Any]`
+  * `async update_status(session_id: str, task_id: int, new_status: str) -> Dict[str, Any]`
+  * `async complete_task(session_id: str, task_id: int) -> Dict[str, Any]`
+  * `async cancel_task(session_id: str, task_id: int) -> Dict[str, Any]`
+  * `async reopen_task(session_id: str, task_id: int) -> Dict[str, Any]`
+  * `async archive_task(session_id: str, task_id: int) -> bool`
+  * `async soft_delete_task(session_id: str, task_id: int) -> bool`
+
+### 5. `RecurringScheduleEngine`
+* **Purpose**: Performs timezone-aware date/time computations for recurring event patterns.
+* **Public Methods**:
+  * `validate_rule(rule: str) -> bool`
+  * `calculate_occurrences(start_time: datetime, rule: str, until: Optional[datetime] = None, timezone_str: Optional[str] = None, count: int = 100) -> List[datetime]`
+  * `get_next_occurrence(start_time: datetime, rule: str, reference_time: datetime, timezone_str: Optional[str] = None, until: Optional[datetime] = None) -> Optional[datetime]`
+
+### 6. `GraphExporter` & `GraphImporter`
 * **Purpose**: Exports and restores graph nodes.
 * **Public Methods**:
   * `async GraphExporter.export_to_json() -> str`

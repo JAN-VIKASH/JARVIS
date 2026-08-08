@@ -1,10 +1,10 @@
 # JARVIS Master Context - Developer Handbook
 
 * **Last Updated**: 2026-08-08
-* **Latest Completed Phase**: Phase 5.2 (Knowledge Graph, User Profiles & Relational Memory)
-* **Next Phase**: Phase 5.3 (User Preferences, Habits & Tasks) [PLANNED]
+* **Latest Completed Phase**: Phase 5.3 (User Preferences, Habits & Tasks)
+* **Next Phase**: Phase 6 (Desktop Automation) [PLANNED]
 * **Status**: Freeze
-* **Version**: v0.5.2
+* **Version**: v0.5.3
 
 ---
 
@@ -89,6 +89,9 @@ Here is why core architectural choices were made:
 * **Why GraphReasoner?** Performs multi-hop BFS pathfinding algorithms to find indirect relationships (e.g. connecting User to a tool through a shared project).
 * **Why BackgroundJobManager?** Text extraction (parsing entities, edges, profiles) requires separate LLM calls, adding several seconds of latency. Enqueuing these jobs onto background threads allows the chat system to reply to the user instantly.
 * **Why ContextBuilder?** Prevents LLM context overflows by building prompts in priority order (User Profile -> Relational Facts -> Semantic Memory -> Graph Facts -> Timelines) and truncating once the character budget is reached.
+* **Why TaskService?** Enforces lifecycle state machine transitions (pending, in_progress, completed, cancelled) and session boundaries, keeping the central ChatService orchestration clean.
+* **Why RecurringScheduleEngine?** Decouples recurrence calculations (daily, weekly, monthly, weekday) from storage, enabling timelines to expand event ranges dynamically on-the-fly.
+* **Why Habits in UserProfileEngine?** Reuses the profile engine to track recurring user preferences/habits without schema duplication, applying strict filters that ignore single occurrences.
 
 ---
 
@@ -124,14 +127,15 @@ The following interfaces describe the implemented architecture and must remain b
 3. **Base Interface Signatures**: Do not change parameters of `BaseLLM`, `BaseMemory`, `BaseSTT`, `BaseTTS`, or `BaseChatService`.
 4. **Offline Capability & Cache Only**: Voice and Embedding services must always remain local-first. SentenceTransformers must load *only* from the local cache (`local_files_only=True`). Raise a clear error if missing, prompting the user to run `python -m voice.download_models`.
 5. **SOLID Repository Pattern Separation**: Relational logic and query compiling code must stay inside repositories, never leaking SQLAlchemy details to `MemoryService` or `ChatService`.
+6. **Task Lifecycle & Isolation**: Task updates, status transitions, and queries must remain isolated by `session_id`, and invalid status transitions must be blocked by the `TaskService` validation layer.
 
 ---
 
 ## 8. Documentation Scope
 
-* **Core Horizon**: This documentation reflects the implementation state up to the completion of Phase 5.2.
+* **Core Horizon**: This documentation reflects the implementation state up to the completion of Phase 5.3.
 * **Synchronization Mandate**: All developer documentation must remain synchronized with the current implementation.
-* **Future Feature Rules**: Any features implemented after Phase 5.2 (such as Phase 5.3 preferences) require corresponding documentation upgrades before being marked as complete.
+* **Future Feature Rules**: Any features implemented after Phase 5.3 (such as Phase 6 desktop control) require corresponding documentation upgrades before being marked as complete.
 * **Planned Separations**: Planned or experimental features must remain clearly separated from completed modules.
 * **Authoritative Reference**: This documentation is designed to be the primary reference manual for developers and future AI assistants.
 

@@ -1,9 +1,9 @@
 # Conversational Memory Flow Diagram
 
 * **Last Updated**: 2026-08-08
-* **Current Phase**: Phase 5.3 (Planned / Next)
+* **Current Phase**: Phase 5.3 (User Preferences, Habits & Tasks)
 * **Status**: Freeze
-* **Version**: v0.5.2
+* **Version**: v0.5.3
 
 ---
 
@@ -18,6 +18,7 @@ graph TD
         C3[MemoryService: retrieve_semantic_context]
         C4[KnowledgeGraphService: expand_context]
         C5[TimelineEngine: generate_timeline]
+        C6[TaskService: list_tasks]
     end
     
     C --> C1
@@ -25,8 +26,9 @@ graph TD
     C --> C3
     C --> C4
     C --> C5
+    C --> C6
     
-    C1 & C2 & C3 & C4 & C5 --> D[ContextBuilder: Token Budgeting]
+    C1 & C2 & C3 & C4 & C5 & C6 --> D[ContextBuilder: Token Budgeting]
     D --> E[Submit combined system prompt & history to LLM]
     E --> F[Receive LLM Result response]
     
@@ -41,10 +43,12 @@ graph TD
     subgraph Async Cognitive Extraction via BackgroundJobManager
         H3[Extract Graph entities & relationship edges to SQLite KG]
         H4[Evolve Profile preferences lists in SQLite Profiles]
+        H5[Extract habits & routines in UserProfileEngine]
     end
     
     H --> H1
     H1 -->|Pending Index Status| H2
     H --> H3
     H --> H4
+    H --> H5
 ```

@@ -183,7 +183,7 @@ class MemoryService:
         # 2. Extract facts/preferences
         if self.memory_filter.should_persist(text):
             # Spawn safe non-blocking background task
-            asyncio.create_task(self._async_extract_and_save(text))
+            asyncio.create_task(self._async_extract_and_save(text, session_id))
             
         # Phase 5.2: Knowledge Graph & User Profile Extraction
         if self.background_job_manager:
@@ -309,7 +309,7 @@ class MemoryService:
         except Exception as e:
             logger.error(f"Failed in advanced event pipeline: {e}", exc_info=True)
 
-    async def _async_extract_and_save(self, text: str) -> None:
+    async def _async_extract_and_save(self, text: str, session_id: str = "default") -> None:
         """
         Runs hybrid extractors and resolves conflicts, deactivating duplicates and saving.
         """
@@ -335,7 +335,8 @@ class MemoryService:
                     key=key,
                     value=value,
                     confidence=confidence,
-                    score=score
+                    score=score,
+                    session_id=session_id
                 )
                 record_id = record.get("id")
                 if not record_id:

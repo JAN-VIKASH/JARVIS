@@ -40,3 +40,13 @@ class ServiceFactory:
         """
         from memory.memory_factory import MemoryFactory
         return MemoryFactory.get_memory_service()
+
+    @staticmethod
+    def get_task_service():
+        """
+        Resolves and returns the active TaskService instance.
+        """
+        from app.services.task_service import TaskService
+        from memory.memory_factory import MemoryFactory
+        sqlite_repo = MemoryFactory.get_sqlite_repo()
+        return TaskService(sqlite_repo)

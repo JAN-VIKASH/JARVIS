@@ -79,6 +79,7 @@ class TaskModel(Base):
     __tablename__ = "tasks"
     
     id = Column(Integer, primary_key=True, autoincrement=True)
+    session_id = Column(String(100), default="default", nullable=False, index=True)
     title = Column(String(255), nullable=False, index=True)
     description = Column(Text, nullable=True)
     status = Column(String(50), default="pending", nullable=False)
@@ -151,6 +152,13 @@ class EventMemoryModel(Base):
     version = Column(Integer, default=1, nullable=False)
     parent_event_id = Column(String(36), nullable=True)
     embedding_id = Column(String(255), nullable=True)
+    
+    # Recurrence columns for Phase 5.3
+    recurrence_rule = Column(String(50), nullable=True)
+    recurrence_until = Column(DateTime, nullable=True)
+    recurrence_series_id = Column(String(36), nullable=True)
+    timezone = Column(String(50), nullable=True)
+    
     created_at = Column(DateTime, default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
 

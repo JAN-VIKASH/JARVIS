@@ -434,50 +434,177 @@ class SQLiteMemoryRepository(BaseMemoryRepository):
                 for m in models
             ]
 
-    async def save_task(self, title: str, description: str, status: str, importance: int) -> Dict[str, Any]:
+    def _task_to_dict(self, m: TaskModel) -> Dict[str, Any]:
+        if not m:
+            return {}
+        now = datetime.utcnow()
+        is_overdue = False
+        is_upcoming = False
+        if m.due_date:
+            is_overdue = m.due_date < now and m.status in ("pending", "in_progress") and m.is_active and not m.is_deleted and not m.is_archived
+            is_upcoming = m.due_date >= now and m.status in ("pending", "in_progress") and m.is_active and not m.is_deleted and not m.is_archived
+            
+        return {
+            "id": m.id,
+            "session_id": m.session_id,
+            "title": m.title,
+            "description": m.description,
+            "status": m.status,
+            "due_date": m.due_date,
+            "importance": m.importance,
+            "is_overdue": is_overdue,
+            "is_upcoming": is_upcoming,
+            "is_active": m.is_active,
+            "is_archived": m.is_archived,
+            "version": m.version,
+            "is_deleted": m.is_deleted,
+            "deleted_at": m.deleted_at,
+            "created_at": m.created_at,
+            "updated_at": m.updated_at
+        }
+
+    async def save_task(
+        self,
+        session_id: str,
+        title: str,
+        description: str,
+        status: str,
+        importance: int,
+        due_date: Optional[datetime] = None,
+        task_id: Optional[int] = None
+    ) -> Dict[str, Any]:
         async with get_async_session() as session:
-            stmt = select(TaskModel).where(
-                TaskModel.title == title,
-                TaskModel.is_deleted == False
-            )
+            if task_id is not None:
+                stmt = select(TaskModel).where(
+                    TaskModel.session_id == session_id,
+                    TaskModel.id == task_id,
+                    TaskModel.is_deleted == False
+                )
+            else:
+                stmt = select(TaskModel).where(
+                    TaskModel.session_id == session_id,
+                    TaskModel.title == title,
+                    TaskModel.is_deleted == False
+                )
+                
             result = await session.execute(stmt)
             model = result.scalars().first()
             
             if model:
+                # Title conflict check
+                if task_id is not None and model.title != title:
+                    conflict_stmt = select(TaskModel).where(
+                        TaskModel.session_id == session_id,
+                        TaskModel.title == title,
+                        TaskModel.is_deleted == False,
+                        TaskModel.id != task_id
+                    )
+                    conflict_res = await session.execute(conflict_stmt)
+                    if conflict_res.scalars().first():
+                        raise ValueError(f"Task with title '{title}' already exists in session {session_id}")
+                        
+                model.title = title
                 model.description = description
                 model.status = status
                 model.importance = importance
+                model.due_date = due_date
+                model.version = (model.version or 1) + 1
                 model.updated_at = datetime.utcnow()
                 model.last_accessed_at = datetime.utcnow()
                 model.access_count = (model.access_count or 0) + 1
             else:
+                if task_id is not None:
+                    raise ValueError(f"Task with id {task_id} not found in session {session_id}")
                 model = TaskModel(
+                    session_id=session_id,
                     title=title,
                     description=description,
                     status=status,
                     importance=importance,
-                    is_active=True
+                    due_date=due_date,
+                    is_active=True,
+                    version=1
                 )
                 session.add(model)
                 
             await session.flush()
-            return {
-                "id": model.id,
-                "title": model.title,
-                "description": model.description,
-                "status": model.status,
-                "importance": model.importance,
-                "version": model.version,
-                "is_active": model.is_active
-            }
+            return self._task_to_dict(model)
 
-    async def search_tasks(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
+    async def get_task_by_id(self, session_id: str, task_id: int) -> Optional[Dict[str, Any]]:
+        async with get_async_session() as session:
+            stmt = select(TaskModel).where(
+                TaskModel.session_id == session_id,
+                TaskModel.id == task_id,
+                TaskModel.is_deleted == False
+            )
+            res = await session.execute(stmt)
+            model = res.scalars().first()
+            return self._task_to_dict(model) if model else None
+
+    async def list_tasks(
+        self,
+        session_id: str,
+        status: Optional[str] = None,
+        include_archived: bool = False,
+        include_deleted: bool = False
+    ) -> List[Dict[str, Any]]:
+        async with get_async_session() as session:
+            stmt = select(TaskModel).where(TaskModel.session_id == session_id)
+            if not include_deleted:
+                stmt = stmt.where(TaskModel.is_deleted == False)
+            if not include_archived:
+                stmt = stmt.where(TaskModel.is_archived == False)
+            if status:
+                stmt = stmt.where(TaskModel.status == status)
+                
+            stmt = stmt.order_by(TaskModel.importance.desc(), TaskModel.created_at.desc())
+            res = await session.execute(stmt)
+            models = res.scalars().all()
+            return [self._task_to_dict(m) for m in models]
+
+    async def archive_task(self, session_id: str, task_id: int) -> bool:
+        async with get_async_session() as session:
+            stmt = select(TaskModel).where(
+                TaskModel.session_id == session_id,
+                TaskModel.id == task_id,
+                TaskModel.is_deleted == False
+            )
+            res = await session.execute(stmt)
+            model = res.scalars().first()
+            if not model:
+                return False
+            model.is_archived = True
+            model.updated_at = datetime.utcnow()
+            await session.flush()
+            return True
+
+    async def soft_delete_task(self, session_id: str, task_id: int) -> bool:
+        async with get_async_session() as session:
+            stmt = select(TaskModel).where(
+                TaskModel.session_id == session_id,
+                TaskModel.id == task_id,
+                TaskModel.is_deleted == False
+            )
+            res = await session.execute(stmt)
+            model = res.scalars().first()
+            if not model:
+                return False
+            model.is_deleted = True
+            model.deleted_at = datetime.utcnow()
+            model.is_active = False
+            await session.flush()
+            return True
+
+    async def search_tasks(self, session_id: str, query: str, limit: int = 10) -> List[Dict[str, Any]]:
         async with get_async_session() as session:
             query_lower = query.lower()
             include_inactive = any(w in query_lower for w in ["history", "previous", "version"])
             include_archived = any(w in query_lower for w in ["archive", "past", "historical"])
             
-            stmt = select(TaskModel).where(TaskModel.is_deleted == False)
+            stmt = select(TaskModel).where(
+                TaskModel.session_id == session_id,
+                TaskModel.is_deleted == False
+            )
             if not include_inactive:
                 stmt = stmt.where(TaskModel.is_active == True)
             if not include_archived:
@@ -490,22 +617,7 @@ class SQLiteMemoryRepository(BaseMemoryRepository):
             
             result = await session.execute(stmt)
             models = result.scalars().all()
-            return [
-                {
-                    "id": m.id,
-                    "title": m.title,
-                    "description": m.description,
-                    "status": m.status,
-                    "importance": m.importance,
-                    "version": m.version,
-                    "is_active": m.is_active,
-                    "is_archived": m.is_archived,
-                    "access_count": m.access_count,
-                    "last_accessed_at": m.last_accessed_at,
-                    "updated_at": m.updated_at
-                }
-                for m in models
-            ]
+            return [self._task_to_dict(m) for m in models]
 
     async def clear_session(self, session_id: str) -> bool:
         async with get_async_session() as session:

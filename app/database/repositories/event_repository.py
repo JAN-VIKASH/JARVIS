@@ -27,9 +27,18 @@ class EventRepository:
         status: str = "planned",
         importance: str = "medium",
         confidence: Optional[float] = None,
-        embedding_id: Optional[str] = None
+        embedding_id: Optional[str] = None,
+        recurrence_rule: Optional[str] = None,
+        recurrence_until: Optional[datetime] = None,
+        recurrence_series_id: Optional[str] = None,
+        timezone: Optional[str] = None
     ) -> Dict[str, Any]:
         async with get_async_session() as session:
+            # Auto-generate series ID for new recurring events if not provided
+            series_id = recurrence_series_id
+            if recurrence_rule and not series_id:
+                series_id = str(uuid.uuid4())
+                
             model = EventMemoryModel(
                 id=str(uuid.uuid4()),
                 session_id=session_id,
@@ -45,7 +54,11 @@ class EventRepository:
                 confidence=confidence,
                 version=1,
                 parent_event_id=None,
-                embedding_id=embedding_id
+                embedding_id=embedding_id,
+                recurrence_rule=recurrence_rule,
+                recurrence_until=recurrence_until,
+                recurrence_series_id=series_id,
+                timezone=timezone
             )
             session.add(model)
             await session.commit()
@@ -71,7 +84,11 @@ class EventRepository:
         importance: str,
         confidence: float,
         embedding_id: Optional[str] = None,
-        raw_text: Optional[str] = None
+        raw_text: Optional[str] = None,
+        recurrence_rule: Optional[str] = None,
+        recurrence_until: Optional[datetime] = None,
+        recurrence_series_id: Optional[str] = None,
+        timezone: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Creates a new version of the event to preserve history (copy-on-write versioning).
@@ -100,7 +117,11 @@ class EventRepository:
                 version=old_model.version + 1,
                 parent_event_id=old_model.id,
                 embedding_id=embedding_id or old_model.embedding_id,
-                raw_text=raw_text or old_model.raw_text
+                raw_text=raw_text or old_model.raw_text,
+                recurrence_rule=recurrence_rule or old_model.recurrence_rule,
+                recurrence_until=recurrence_until or old_model.recurrence_until,
+                recurrence_series_id=recurrence_series_id or old_model.recurrence_series_id,
+                timezone=timezone or old_model.timezone
             )
             session.add(new_model)
             await session.commit()
@@ -132,7 +153,11 @@ class EventRepository:
                 version=old_model.version + 1,
                 parent_event_id=old_model.id,
                 embedding_id=old_model.embedding_id,
-                raw_text=old_model.raw_text
+                raw_text=old_model.raw_text,
+                recurrence_rule=old_model.recurrence_rule,
+                recurrence_until=old_model.recurrence_until,
+                recurrence_series_id=old_model.recurrence_series_id,
+                timezone=old_model.timezone
             )
             session.add(new_model)
             await session.commit()
@@ -275,6 +300,49 @@ class EventRepository:
                 model.embedding_id = embedding_id
                 await session.commit()
 
+    async def delete_event(self, event_id: str) -> bool:
+        """
+        Deletes an event from the database.
+        """
+        async with get_async_session() as session:
+            stmt = delete(EventMemoryModel).where(EventMemoryModel.id == event_id)
+            result = await session.execute(stmt)
+            await session.commit()
+            return result.rowcount > 0
+
+    async def get_recurring_events(self, session_id: str) -> List[Dict[str, Any]]:
+        """
+        Retrieves active events with a recurrence rule (latest version only).
+        """
+        async with get_async_session() as session:
+            child_alias = aliased(EventMemoryModel)
+            stmt = select(EventMemoryModel).where(
+                and_(
+                    EventMemoryModel.session_id == session_id,
+                    EventMemoryModel.recurrence_rule.isnot(None),
+                    ~exists().where(child_alias.parent_event_id == EventMemoryModel.id)
+                )
+            )
+            result = await session.execute(stmt)
+            models = result.scalars().all()
+            return [self._to_dict(m) for m in models]
+
+    async def get_all_latest_events(self, session_id: str) -> List[Dict[str, Any]]:
+        """
+        Retrieves all latest versions of events for a session.
+        """
+        async with get_async_session() as session:
+            child_alias = aliased(EventMemoryModel)
+            stmt = select(EventMemoryModel).where(
+                and_(
+                    EventMemoryModel.session_id == session_id,
+                    ~exists().where(child_alias.parent_event_id == EventMemoryModel.id)
+                )
+            )
+            result = await session.execute(stmt)
+            models = result.scalars().all()
+            return [self._to_dict(m) for m in models]
+
     def _to_dict(self, model: EventMemoryModel) -> Dict[str, Any]:
         return {
             "id": model.id,
@@ -292,6 +360,10 @@ class EventRepository:
             "version": model.version,
             "parent_event_id": model.parent_event_id,
             "embedding_id": model.embedding_id,
+            "recurrence_rule": model.recurrence_rule,
+            "recurrence_until": model.recurrence_until,
+            "recurrence_series_id": model.recurrence_series_id,
+            "timezone": model.timezone,
             "created_at": model.created_at,
             "updated_at": model.updated_at
         }

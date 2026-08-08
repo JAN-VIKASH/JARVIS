@@ -1,9 +1,9 @@
 # JARVIS Folder Structure
 
 * **Last Updated**: 2026-08-08
-* **Current Phase**: Phase 5.3 (Planned / Next)
+* **Current Phase**: Phase 5.3 (User Preferences, Habits & Tasks)
 * **Status**: Freeze
-* **Version**: v0.5.2
+* **Version**: v0.5.3
 
 ---
 
@@ -75,6 +75,7 @@ JARVIS/
 │   │   │   ├── duplicate_event_resolver.py # Overlap resolver
 │   │   │   ├── event_extractor.py          # Event extraction engine
 │   │   │   ├── event_update_detector.py    # Lifecycle update detector
+│   │   │   ├── recurring_schedule_engine.py # Recurrence schedule occurrences calculator
 │   │   │   ├── time_normalizer.py          # Relative UTC time normalizer
 │   │   │   └── timeline_engine.py          # Timeline layout generator
 │   │   │
@@ -97,7 +98,8 @@ JARVIS/
 │   │   │   └── response_validator.py # Fact-checking & length validation
 │   │   │
 │   │   ├── chat_service.py     # Main ChatService coordinator facade
-│   │   └── factory.py          # ServiceFactory DI registry
+│   │   ├── factory.py          # ServiceFactory DI registry
+│   │   └── task_service.py     # TaskService lifecycle coordinator
 │   │
 │   ├── utils/                  # Helper modules
 │   │   ├── file_loader.py      # Asynchronous file reading helpers
@@ -158,6 +160,9 @@ JARVIS/
 │   └── cognitive/              # Integration and unit tests
 │       ├── test_event_lifecycle.py # Calendar update & duplicate tests
 │       ├── test_graph_engine.py    # Knowledge graph & alias tests
+│       ├── test_habits_profile.py  # Habits and routines user profile tests
+│       ├── test_recurrence_engine.py # Event recurrence calculations tests
+│       ├── test_task_operations.py # Task lifecycle CRUD and transitions tests
 │       └── test_temporal_engine.py # Event timeline database tests
 │
 ├── voice/                      # Voice Interface module

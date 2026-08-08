@@ -1,9 +1,9 @@
 # JARVIS Architecture Details
 
 * **Last Updated**: 2026-08-08
-* **Current Phase**: Phase 5.3 (Planned / Next)
+* **Current Phase**: Phase 5.3 (User Preferences, Habits & Tasks)
 * **Status**: Freeze
-* **Version**: v0.5.2
+* **Version**: v0.5.3
 
 ---
 
@@ -24,17 +24,20 @@ JARVIS is built upon a strict, unidirectional layered architecture. Data and cal
                                  │
                                  v
   +-------------------------------------------------------------+
-  | Service Layer: Facade Orchestrators (ChatService, VoiceSvc) |
+  | Service Layer: Facade Orchestrators                         |
+  | (ChatService, VoiceService, TaskService)                    |
   +------------------------------┬------------------------------+
                                  │
                                  v
   +-------------------------------------------------------------+
-  | Cognitive Layer: UserProfile, Graph, Alias, Pronouns        |
+  | Cognitive Layer: UserProfile, Graph, Alias, Pronouns,       |
+  | RecurringScheduleEngine                                     |
   +------------------------------┬------------------------------+
                                  │
                                  v
   +-------------------------------------------------------------+
-  | Memory / Repository Layer: Entity, Relational, Event repos  |
+  | Memory / Repository Layer: Entity, Relational (Fact/Task),  |
+  | Event (Calendar/Recurrence) repositories                    |
   +------------------------------┬------------------------------+
                                  │
                                  v
@@ -148,3 +151,13 @@ JARVIS is built upon a strict, unidirectional layered architecture. Data and cal
 > **ADR 7: Layered Context Retrieval**
 > * **Context**: Prioritizing context insertion is essential for LLM focus.
 > * **Decision**: Enforce a 4-layer memory context retrieval sequence: Layer 1 (Current Input) -> Layer 2 (Sliding History turns) -> Layer 3 (SQL Relational Profile data) -> Layer 4 (Vector Semantic database exchanges).
+
+> [!NOTE]
+> **ADR 8: TaskService Lifecycle Validation**
+> * **Context**: The task tracking workflow requires a deterministic state machine to govern state transitions (`pending`, `in_progress`, `completed`, `cancelled`) and session boundaries.
+> * **Decision**: Implement a dedicated `TaskService` handling lifecycle checking and session filters. Database access is kept strictly inside repository models.
+
+> [!NOTE]
+> **ADR 9: RecurringScheduleEngine Decoupling**
+> * **Context**: Calendar schedules frequently use recurring triggers (daily, weekly, monthly, weekday) that should not clutter the database records or timeline render interfaces.
+> * **Decision**: Create a stateless `RecurringScheduleEngine` utility that computes occurrence series on-the-fly, isolating temporal math logic from persistence.

@@ -1,10 +1,10 @@
 # JARVIS Coding Guidelines
 
 * **Last Updated**: 2026-08-08
-* **Latest Completed Phase**: Phase 5.2 (Knowledge Graph, User Profiles & Relational Memory)
-* **Next Phase**: Phase 5.3 (User Preferences, Habits & Tasks) [PLANNED]
+* **Latest Completed Phase**: Phase 5.3 (User Preferences, Habits & Tasks)
+* **Next Phase**: Phase 6 (Desktop Automation) [PLANNED]
 * **Status**: Freeze
-* **Version**: v0.5.2
+* **Version**: v0.5.3
 
 ---
 
@@ -57,10 +57,13 @@ class ChatService(BaseChatService):
 * Direct SQL execution (e.g. `session.execute(stmt)`) inside business services is forbidden. Place all queries inside repository files in `app/database/repositories/`.
 * Modifications and deletions must run within transaction contexts. In case of exceptions, transactions must automatically roll back.
 * **SQLAlchemy Session Model Refresh**: After session commits (`await session.commit()`), always refresh instance properties using `await session.refresh(model)` to avoid `MissingGreenlet` exceptions when reading database-generated defaults (like timestamp columns).
+* **Session Isolation Mandate**: Any query or persistent update to tasks/events must enforce isolation filtering by a mandatory `session_id` to prevent cross-session leaks.
+* **Lifecycle Transition Validation**: All task status changes must proceed through the `TaskService` transition state machine. Raw updates bypassing transition checks are prohibited.
+* **Asynchronous Migration Safety**: Database upgrades or column alterations on startup must execute asynchronously checking column presence via `PRAGMA table_info` rather than raw synchronous cursor blocks.
 
 ### Cache Management & Invalidation
 * Cache expensive, repeated lookups (like entity aliases or multi-hop pathfinders) using bounded async-safe LRU caching decorators.
-* Mutative actions (such as adding, updating, or deleting nodes/relationships) must trigger explicit cache invalidation to prevent stale reads.
+* Mutative actions (such as adding, updating, or deleting nodes/relationships, or updating tasks/habits) must trigger explicit cache invalidation to prevent stale reads.
 
 ---
 

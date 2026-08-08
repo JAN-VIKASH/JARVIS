@@ -1,18 +1,18 @@
-# Phase 5: Cognitive Intelligence Engine (Phases 5.1, 5.1.1, & 5.2)
+# Phase 5: Cognitive Intelligence Engine (Phases 5.1, 5.1.1, 5.2, & 5.3)
 
 * **Last Updated**: 2026-08-08
-* **Latest Completed Phase**: Phase 5.2 (Knowledge Graph, User Profiles & Relational Memory)
-* **Next Phase**: Phase 5.3 (User Preferences, Habits & Tasks) [PLANNED]
+* **Latest Completed Phase**: Phase 5.3 (User Preferences, Habits & Tasks)
+* **Next Phase**: Phase 6 (Desktop Automation) [PLANNED]
 * **Status**: Freeze
-* **Version**: v0.5.2
+* **Version**: v0.5.3
 
 ---
 
 ## Objectives
-Grant JARVIS advanced cognitive abilities: time-aware schedule/deadline tracking, a persistent relational Knowledge Graph, session-level structured User Profiles, alias and pronoun resolution, and multi-hop reasoning. Decouple these systems using the Repository Pattern, constructor-based Dependency Injection, async-safe caches, and transactional rollbacks.
+Grant JARVIS advanced cognitive abilities: time-aware schedule/deadline tracking, a persistent relational Knowledge Graph, session-level structured User Profiles, alias and pronoun resolution, multi-hop reasoning, and task/preference/habit management. Decouple these systems using the Repository Pattern, constructor-based Dependency Injection, async-safe caches, transactional rollbacks, and a deterministic task status transition validation layer.
 
 ## Problem Solved
-Enabling time-aware schedule tracking, nickname fuzzy resolutions, resolving pronoun references to canonical entities, structuring user profile attributes, and performing multi-hop reasoning over related facts.
+Enabling time-aware schedule tracking, nickname fuzzy resolutions, resolving pronoun references to canonical entities, structuring user profile attributes, performing multi-hop reasoning over related facts, managing user task lists with state machine transitions, and dynamically computing recurring event series.
 
 ## Change Log
 * **Added**:
@@ -20,7 +20,7 @@ Enabling time-aware schedule tracking, nickname fuzzy resolutions, resolving pro
   * `app/database/repositories/relationship_repository.py`: Graph edge connections storage queries.
   * `app/database/repositories/alias_repository.py`: Alternate naming resolution mapper.
   * `app/database/repositories/user_profile_repository.py`: Profile state persistence.
-  * `app/database/repositories/event_repository.py`: Temporal event persistence.
+  * `app/database/repositories/event_repository.py`: Calendar event persistence.
   * `app/cognitive/resolution/alias_resolution_engine.py`: Fuzzy Levenshtein (threshold >= 0.85) name mapper.
   * `app/cognitive/resolution/pronoun_resolver.py`: Resolves pronouns (it, they) to last 5 message referents.
   * `app/cognitive/profile/user_profile_engine.py`: User profile evolution and list modifiers.
@@ -35,15 +35,23 @@ Enabling time-aware schedule tracking, nickname fuzzy resolutions, resolving pro
   * `app/services/cognitive/time_normalizer.py`: Rule-based and LLM temporal parser.
   * `app/services/cognitive/event_extractor.py`: LLM calendar event extractor.
   * `app/services/cognitive/timeline_engine.py`: View generator.
+  * `app/services/cognitive/recurring_schedule_engine.py`: Recurrence calculator.
+  * `app/services/task_service.py`: Task lifecycle controller with status transition rules.
   * `app/services/response/prompt_builder.py`: Compiles final LLM prompt context structures.
   * `tests/cognitive/test_event_lifecycle.py`: Calendar integration tests.
   * `tests/cognitive/test_graph_engine.py`: Relational knowledge graph integration tests.
+  * `tests/cognitive/test_task_operations.py`: Task CRUD validation tests.
+  * `tests/cognitive/test_recurrence_engine.py`: Date calculations and boundary tests.
+  * `tests/cognitive/test_habits_profile.py`: Habit preference updates tests.
 * **Modified**:
   * `app/config/settings.py`: Default settings configurations for graph features.
-  * `app/database/models.py`: Declared tables for entities, edges, profiles, and events.
-  * `memory/memory_service.py`: Injected new repositories into recall layers.
+  * `app/database/models.py`: Declared tables for entities, edges, profiles, events, and tasks (with recurrence and session columns).
+  * `app/database/migrations.py`: Implemented dynamic PRAGMA-based async schema upgrades.
+  * `memory/repository.py` & `memory/sqlite_repository.py`: Implemented CRUD task operations and derived fields.
+  * `memory/memory_service.py`: Injected new repositories into recall layers, passing session IDs safely to background threads.
   * `memory/memory_factory.py`: Configured singleton instances registration.
-  * `app/services/chat_service.py`: Structured context assembly workflows.
+  * `app/services/chat_service.py`: Structured context assembly workflows, budgeting, and cache invalidation.
+  * `app/services/factory.py`: Registered TaskService constructor DI.
 
 ## Architecture
 ```text
@@ -52,21 +60,23 @@ ChatService.execute_chat()
   ├── PronounResolver.resolve_referent() ──> Identifies seed entities
   ├── UserProfileEngine.get_profile_context()
   ├── KnowledgeGraphService.expand_context() ──> Resolves entity neighborhood
+  ├── TaskService.list_tasks() ──> Retrieves active user tasks
+  ├── TimelineEngine.generate_timeline() ──> Expands recurring occurrences on-the-fly via RecurringScheduleEngine
   ├── ContextBuilder.build_context() ──> Budgets context up to token limit (4000)
   │
   ├── Call LLM Provider with Budgeted Context
   │
   └── MemoryService.save_message() (Async background task)
         │
-        └── BackgroundJobManager enqueues:
+        └── BackgroundJobManager enqueues (propagating session_id):
               ├── GraphExtractor.extract_graph() ──> Entities/edges to DB
-              └── UserProfileEngine.extract_and_update_profile() ──> Evolves profile
+              └── UserProfileEngine.extract_and_update_profile() ──> Evolves profile (including habits/routines)
 ```
 
 ## Verification
 Run all cognitive unit tests:
 ```bash
-venv\Scripts\python -m unittest tests.cognitive.test_event_lifecycle tests.cognitive.test_graph_engine
+venv\Scripts\python -m unittest tests.cognitive.test_event_lifecycle tests.cognitive.test_graph_engine tests.cognitive.test_temporal_engine tests.cognitive.test_task_operations tests.cognitive.test_recurrence_engine tests.cognitive.test_habits_profile
 ```
 
 ## Known Limitations

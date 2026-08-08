@@ -1,10 +1,10 @@
 # JARVIS Roadmap
 
 * **Last Updated**: 2026-08-08
-* **Latest Completed Phase**: Phase 5.2 (Knowledge Graph, User Profiles & Relational Memory)
-* **Next Phase**: Phase 5.3 (User Preferences, Habits & Tasks)
+* **Latest Completed Phase**: Phase 5.3 (User Preferences, Habits & Tasks)
+* **Next Phase**: Phase 6 (Desktop Automation)
 * **Status**: Freeze
-* **Version**: v0.5.2
+* **Version**: v0.5.3
 
 ---
 
@@ -14,7 +14,7 @@
 [✅ Phase 1: Foundation] ──> [✅ Phase 2: Groq LLM] ──> [✅ Phase 3: Voice PTT]
                                                                 │
                                                                 v
-[Planned Phase 6: Desktop] <── [⚡ Next Phase 5.3] <── [✅ Phase 5.2: Relational Graph] <── [✅ Phase 5.1.1: Event Lifecycle] <── [✅ Phase 5.1: Event Engine] <── [✅ Phase 4: Long Memory]
+[Planned Phase 7: Browser] <── [⚡ Next Phase 6: Desktop] <── [✅ Phase 5.3: Habits & Tasks] <── [✅ Phase 5.2: Relational Graph] <── [✅ Phase 5.1.1: Event Lifecycle] <── [✅ Phase 5.1: Event Engine] <── [✅ Phase 4: Long Memory]
 ```
 
 ---
@@ -95,14 +95,19 @@
   * Multi-hop GraphReasoner tracing chain linkages.
   * Token-budgeted ContextBuilder compiling ranked contexts.
 
+### ✅ Phase 5.3: User Preferences, Habits & Tasks (v0.5.3)
+* **Goal**: Extract user habits/routines, compute recurring events, and manage task lists with lifecycle state machines.
+* **Features**:
+  - Dedicated Task Service with session isolation, derived flags (overdue, upcoming), and lifecycle transition checking.
+  - User habits and routines profile engine ignoring isolated event extractions.
+  - Recurring schedule engine resolving daily, weekly, weekday, and monthly (with overflow day support) occurrences.
+  - Temporal timelines expansion integrating recurring occurrences on-the-fly.
+
 ---
 
 ## Future Roadmap
 
-### ⚡ Next Phase 5.3: User Preferences, Habits & Tasks (v0.5.3) [PLANNED]
-* **Goal**: Extract long-term user habits, routines, recurring schedules, and manage structured task lists.
-
-### Phase 6: Desktop Automation (v0.6) [PLANNED]
+### ⚡ Next Phase 6: Desktop Automation (v0.6) [PLANNED]
 * **Goal**: OS desktop navigation.
 * **Details**: Run GUI-level operations, control mouse, keyboard, and automate administrative tasks.
 

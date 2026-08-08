@@ -3,6 +3,7 @@ Abstract base class definition for Memory repositories.
 """
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Optional
+from datetime import datetime
 
 class BaseMemoryRepository(ABC):
     """
@@ -66,13 +67,48 @@ class BaseMemoryRepository(ABC):
         pass
 
     @abstractmethod
-    async def save_task(self, title: str, description: str, status: str, importance: int) -> Dict[str, Any]:
-        """Saves or updates a task."""
+    async def save_task(
+        self,
+        session_id: str,
+        title: str,
+        description: str,
+        status: str,
+        importance: int,
+        due_date: Optional[datetime] = None,
+        task_id: Optional[int] = None
+    ) -> Dict[str, Any]:
+        """Saves or updates a task for a session."""
         pass
 
     @abstractmethod
-    async def search_tasks(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
-        """Searches tasks."""
+    async def search_tasks(self, session_id: str, query: str, limit: int = 10) -> List[Dict[str, Any]]:
+        """Searches tasks within a session."""
+        pass
+
+    @abstractmethod
+    async def get_task_by_id(self, session_id: str, task_id: int) -> Optional[Dict[str, Any]]:
+        """Retrieves a task by its ID."""
+        pass
+
+    @abstractmethod
+    async def list_tasks(
+        self,
+        session_id: str,
+        status: Optional[str] = None,
+        include_archived: bool = False,
+        include_deleted: bool = False
+    ) -> List[Dict[str, Any]]:
+        """Lists tasks filtered by status and archive state."""
+        pass
+
+    @abstractmethod
+    async def archive_task(self, session_id: str, task_id: int) -> bool:
+        """Archives a task by setting is_archived to True."""
+        pass
+
+    @abstractmethod
+    async def soft_delete_task(self, session_id: str, task_id: int) -> bool:
+        """Soft deletes a task."""
         pass
 
     @abstractmethod

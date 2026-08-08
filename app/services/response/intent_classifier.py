@@ -15,6 +15,49 @@ class IntentClassifier:
         if any(re.match(p, q_lower) for p in greeting_patterns) or q_lower in {"hello", "hi", "hey"}:
             return "greeting"
             
+        # Task & Habit Classification (Phase 5.3)
+        task_create_patterns = [
+            r"\b(add|create|new|schedule|insert)\s+(a\s+)?task\b",
+            r"\badd\s+(a\s+)?todo\b",
+            r"\bneed\s+to\s+(remember\s+to\s+)?(do|finish|complete|write|call|check|send)\b",
+            r"\badd\s+(.+)\s+to\s+(my\s+)?(tasks|todo|todo\s+list)\b"
+        ]
+        if any(re.search(p, q_lower) for p in task_create_patterns):
+            return "task_create"
+
+        task_query_patterns = [
+            r"\bshow\s+(my\s+)?(tasks|todo|todos|pending\s+tasks|active\s+tasks|completed\s+tasks)\b",
+            r"\bwhat\s+are\s+my\s+(tasks|todos|pending\s+tasks|active\s+tasks)\b",
+            r"\blist\s+(my\s+)?(tasks|todos|pending\s+tasks|active\s+tasks)\b",
+            r"\bget\s+(my\s+)?(tasks|todos|pending\s+tasks)\b"
+        ]
+        if any(re.search(p, q_lower) for p in task_query_patterns):
+            return "task_query"
+
+        task_update_patterns = [
+            r"\b(complete|finish|done|cancel|reopen|archive|delete|remove)\s+(the\s+)?task\b",
+            r"\bmark\s+(the\s+)?task\s+(as\s+)?(completed|complete|done|cancelled|pending)\b",
+            r"\b(complete|finish|cancel|reopen|archive|delete|remove)\s+task\s+#?\d+\b",
+            r"\bupdate\s+task\b"
+        ]
+        if any(re.search(p, q_lower) for p in task_update_patterns):
+            return "task_update"
+
+        habit_query_patterns = [
+            r"\bwhat\s+are\s+my\s+(habits|routines)\b",
+            r"\blist\s+(my\s+)?(habits|routines)\b",
+            r"\bshow\s+(my\s+)?(habits|routines)\b"
+        ]
+        if any(re.search(p, q_lower) for p in habit_query_patterns):
+            return "habit_query"
+
+        habit_update_patterns = [
+            r"\b(add|create|new|save|remember|routinely)\s+(habit|routine)\b",
+            r"\bi\s+(always|usually|routinely|every\s+day|every\s+week)\s+\w+\b"
+        ]
+        if any(re.search(p, q_lower) for p in habit_update_patterns):
+            return "habit_update"
+            
         # 1a. Schedule Query
         schedule_patterns = [
             r"\b(today|tomorrow|yesterday|monday|tuesday|wednesday|thursday|friday|saturday|sunday)'?s?\s+schedule\b",

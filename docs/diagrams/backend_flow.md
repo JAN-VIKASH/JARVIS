@@ -1,9 +1,9 @@
 # Backend Execution Sequence Diagram
 
 * **Last Updated**: 2026-08-08
-* **Current Phase**: Phase 5.3 (Planned / Next)
+* **Current Phase**: Phase 5.3 (User Preferences, Habits & Tasks)
 * **Status**: Freeze
-* **Version**: v0.5.2
+* **Version**: v0.5.3
 
 ---
 
@@ -31,7 +31,7 @@ sequenceDiagram
     Note over CS: Resolves pronouns via PronounResolver
     Note over CS: Matches query entities via EntityRepository
     CS->>MS: graph_service.expand_context(seed_entities, max_depth=2)
-    Note over CS: Retrieves schedule timeline via TimelineEngine (if event query)
+    Note over CS: Retrieves schedule timeline and tasks via TimelineEngine / TaskService
     
     Note over CS: Dynamically constructs & budgets system prompt context
     

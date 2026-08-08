@@ -41,7 +41,8 @@ class PromptBuilder:
         timeline_context: str = "",
         is_voice: bool = False,
         profile_context: str = "",
-        graph_context: str = ""
+        graph_context: str = "",
+        task_context: str = ""
     ) -> str:
         # 1. Load base persona prompt
         base_prompt = self._load_template("base_prompt.txt")
@@ -96,6 +97,30 @@ class PromptBuilder:
                 intent_instructions = tmpl.format(max_words=max_words)
             else:
                 intent_instructions = f"Suggest ideas and options concisely (max {max_words} words)."
+        elif intent == "task_create":
+            intent_instructions = (
+                "Style: Task Creation mode.\n"
+                "Constraints: Briefly confirm that the task was created or added successfully. Let the user know the details (e.g. title, due date, status). Keep it concise.\n"
+                "Personality: Functional, organized helper."
+            )
+        elif intent == "task_query":
+            intent_instructions = (
+                "Style: Task Query mode.\n"
+                "Constraints: List the matching tasks from the injected task context. Format as a clean bulleted list showing task ID, title, status, and due dates if applicable. If no tasks exist, say so directly.\n"
+                "Personality: Systematic, clear."
+            )
+        elif intent == "task_update":
+            intent_instructions = (
+                "Style: Task Update mode.\n"
+                "Constraints: Confirm the update or status change (e.g. completed, cancelled, reopened) of the task. Be very brief.\n"
+                "Personality: Helpful, concise."
+            )
+        elif intent in ("habit_query", "habit_update"):
+            intent_instructions = (
+                "Style: Habit and Routine mode.\n"
+                "Constraints: Discuss the user's habits and routines based on the injected context. Format as a clean list or short response. Confirm any habit updates briefly.\n"
+                "Personality: Observant, friendly."
+            )
         elif intent in ("schedule_query", "timeline_query", "event_query"):
             max_words = settings.MAX_FACT_RESPONSE_WORDS
             intent_instructions = (
@@ -147,6 +172,8 @@ class PromptBuilder:
             context_blocks.append(f"### USER PROFILE (Identity, Career, Skills, Preferences)\n{profile_context}")
         if graph_context:
             context_blocks.append(f"### KNOWLEDGE GRAPH CONTEXT (ENTITIES & RELATIONSHIPS)\n{graph_context}")
+        if task_context:
+            context_blocks.append(f"### ACTIVE TASKS CONTEXT\n{task_context}")
             
         if context_blocks:
             merged_context = "\n\n".join(context_blocks)

@@ -1,8 +1,8 @@
 # Phase 2: Groq Integration
 
 * **Last Updated**: 2026-08-08
-* **Latest Completed Phase**: Phase 5.2 (Knowledge Graph, User Profiles & Relational Memory)
-* **Next Phase**: Phase 5.3 (User Preferences, Habits & Tasks) [PLANNED]
+* **Latest Completed Phase**: Phase 5.3 (User Preferences, Habits & Tasks)
+* **Next Phase**: Phase 6 (Desktop Automation) [PLANNED]
 * **Status**: Completed
 * **Version**: v0.2
 

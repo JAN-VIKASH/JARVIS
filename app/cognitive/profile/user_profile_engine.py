@@ -161,14 +161,15 @@ class UserProfileEngine:
             "Output ONLY a valid JSON object matching this schema:\n\n"
             "{\n"
             '  "updates": [\n'
-            '    {"key": "languages|skills|ide|frameworks|interests|career|preferences|goals|education", "operation": "add|remove|set", "value": "value", "confidence": 0.0-1.0}\n'
+            '    {"key": "languages|skills|ide|frameworks|interests|career|preferences|goals|education|habits|routines", "operation": "add|remove|set", "value": "value", "confidence": 0.0-1.0}\n'
             "  ]\n"
             "}\n\n"
             "Rules:\n"
             "1. Do not output any thinking or conversational text.\n"
             "2. Ensure all fields are included in the JSON.\n"
             "3. Normalize operations: 'add' (append item to list), 'remove' (delete item from list), 'set' (override key value).\n"
-            "4. Only extract explicit changes mentioned by the user."
+            "4. Only extract explicit changes mentioned by the user.\n"
+            "5. For 'habits' and 'routines', only extract them if recurring behavior is explicitly described (e.g. 'every day', 'weekly', 'routinely'). Do not extract single occurrences."
         )
 
         try:

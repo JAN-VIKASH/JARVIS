@@ -130,6 +130,21 @@ def download_embedding_model():
     SentenceTransformer(model_name, local_files_only=False)
     voice_logger.info(f"SentenceTransformer '{model_name}' model downloaded and cached successfully.")
 
+def download_wake_word_model():
+    """
+    Downloads the hey_jarvis ONNX model file for wake word detection.
+    """
+    models_dir = voice_settings.VOICE_MODELS_DIR
+    os.makedirs(models_dir, exist_ok=True)
+    dest_path = os.path.join(models_dir, "hey_jarvis_v0.1.onnx")
+    if os.path.exists(dest_path):
+        voice_logger.info(f"Wake word model hey_jarvis_v0.1.onnx already present at: {dest_path}")
+        return
+
+    url = "https://github.com/dscripka/openWakeWord/raw/main/openwakeword/resources/models/hey_jarvis_v0.1.onnx"
+    download_file_with_progress(url, dest_path)
+    voice_logger.info("Wake word model downloaded successfully.")
+
 def main():
     voice_logger.info("Starting JARVIS Voice Interface models and binaries pre-downloader...")
     try:
@@ -137,6 +152,7 @@ def main():
         download_piper_voice_model()
         download_whisper_model()
         download_embedding_model()
+        download_wake_word_model()
         voice_logger.info("All binaries and voice models downloaded successfully! Ready for use.")
     except Exception as e:
         voice_logger.error(f"Error during downloader execution: {e}", exc_info=True)

@@ -157,15 +157,20 @@
   * Strict screenshot privacy: transient image files created locally in workspace, purged within `finally` blocks, and never sent to cloud APIs.
   * Decoupled coordinates output: VisionService calculates bounding coordinates; DesktopAutomationService remains the sole input executor.
 
+### ✅ Phase 10: Wake Word (v1.0)
+* **Goal**: Continuously listening offline hotword service triggering conversational turns.
+* **Features**:
+  * Continuous non-blocking background microphone capture slicing.
+  * Real openWakeWord local ONNX model predictions when package and weights are available.
+  * Safe fallback to standard manual Push-to-Talk (PTT) console controls if dependencies or models are missing (no fake triggers).
+  * Sinusoidal chime notification tone synthesized completely dynamically in memory.
+  * Resilient failure handling switching cleanly to PTT mode upon loop or device exceptions.
+
 ---
 
 ## Future Roadmap
 
-### ⚡ Next Phase 10: Wake Word (v1.0) [PLANNED]
-* **Goal**: Continuously listening hotword service.
-* **Details**: Add background thread audio processing to capture wake trigger phrase ("Hey Jarvis") using local, lightweight engine.
-
-### Phase 11: Desktop Graphical User Interface (v1.1) [PLANNED]
+### ⚡ Next Phase 11: Desktop Graphical User Interface (v1.1) [PLANNED]
 * **Goal**: Stunning visual HUD.
 * **Details**: Create clean desktop panel (using electron or Tauri) showing agent status and chat records.
 

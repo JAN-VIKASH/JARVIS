@@ -136,13 +136,21 @@
 
 ---
 
+### ✅ Phase 8: Browser Automation (v0.8)
+* **Goal**: Scrape websites and automate browser UI workflows securely.
+* **Features**:
+  * Persistent isolated browser context sessions per `session_id` using Playwright async API.
+  * Authoritative tool schemas added cleanly into registry (`open_browser`, `navigate_url`, `click_element`, `type_element`, `scroll_browser`, `read_page_content`, `switch_tab`, `close_tab`, `download_file`, `upload_file`).
+  * Safety Tier classification checks (`SAFE`, `CAUTION`, `CONFIRMATION_REQUIRED`, `BLOCKED`).
+  * Localhost navigation allowed in test environment but blocked in production.
+  * Independent validation enforcement inside `BrowserAutomationService` (traversal protection, absolute paths blocker, and dangerous extension filters like `.exe`).
+  * Seamless confirmation loop integration with `ChatService` and `AgentService` orchestrators.
+
+---
+
 ## Future Roadmap
 
-### ⚡ Next Phase 8: Browser Automation (v0.8) [PLANNED]
-* **Goal**: Browser scraping and UI interactions.
-* **Details**: Integrate Playwright to navigate websites, complete checkouts, and pull dynamic HTML assets.
-
-### Phase 9: Vision (v0.9) [PLANNED]
+### ⚡ Next Phase 9: Vision (v0.9) [PLANNED]
 * **Goal**: OCR and image interpretation.
 * **Details**: Local image processing pipelines via ONNX models to analyze screen snapshots.
 

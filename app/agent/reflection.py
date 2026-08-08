@@ -12,8 +12,9 @@ class ReflectionEngine:
     """
     Verifies state results of executed tools.
     """
-    def __init__(self, desktop_tool: DesktopAutomationTool):
+    def __init__(self, desktop_tool: DesktopAutomationTool, browser_service: Any = None):
         self.desktop_tool = desktop_tool
+        self.browser_service = browser_service
 
     async def verify_step(self, tool_name: str, parameters: Dict[str, Any], tool_result: str) -> bool:
         """
@@ -59,6 +60,14 @@ class ReflectionEngine:
                 return title in active_title.lower()
             except Exception:
                 return False
+
+        if tool_name == "navigate_url":
+            expected_url = parameters.get("url", "").lower().strip()
+            if self.browser_service:
+                # Resolve active page URL (can verify session context if session_id is available)
+                # In reflection verification, we can verify that the result does not indicate failure
+                return not ("error" in tool_result.lower() or "failed" in tool_result.lower())
+            return True
 
         # For general tools, if no exceptions occurred, default to success
         return True

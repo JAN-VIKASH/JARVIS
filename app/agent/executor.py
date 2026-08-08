@@ -11,6 +11,7 @@ from app.agent.registry import ToolSelector
 from app.agent.reflection import ReflectionEngine
 from app.agent.recovery import RecoveryEngine
 from app.services.desktop_automation_service import DesktopAutomationService
+from tools.registry import BROWSER_TOOL_SCHEMAS
 
 logger = logging.getLogger("jarvis.agent.executor")
 
@@ -19,10 +20,11 @@ class ExecutionEngine:
     Executes an AgentPlan step-by-step, enforcing safety checks, prerequisites, 
     verification reflection, and recovery paths.
     """
-    def __init__(self, desktop_service: DesktopAutomationService):
+    def __init__(self, desktop_service: DesktopAutomationService, browser_service: Any = None):
         self.desktop_service = desktop_service
+        self.browser_service = browser_service
         self.tool_selector = ToolSelector()
-        self.reflection_engine = ReflectionEngine(desktop_service.desktop_tool)
+        self.reflection_engine = ReflectionEngine(desktop_service.desktop_tool, browser_service)
         self.recovery_engine = RecoveryEngine(max_retries=3)
         self.step_timeout = 15.0
 
@@ -74,7 +76,12 @@ class ExecutionEngine:
                 return f"Agent execution failed at step #{step.step_id}: {err}"
 
             # 5. Safety Tier Check
-            tier = self.desktop_service._classify_safety_tier(step.selected_tool, step.parameters)
+            is_browser_tool = step.selected_tool in [b["name"] for b in BROWSER_TOOL_SCHEMAS]
+            if is_browser_tool and self.browser_service:
+                tier = self.browser_service._classify_safety_tier(step.selected_tool, step.parameters)
+            else:
+                tier = self.desktop_service._classify_safety_tier(step.selected_tool, step.parameters)
+
             if tier == "BLOCKED":
                 step.status = "FAILED"
                 step.error = "Safety Block: Executing this command is blocked due to safety restrictions."
@@ -89,8 +96,9 @@ class ExecutionEngine:
                 # Pause plan, transition plan to WAITING_FOR_CONFIRMATION
                 plan.status = "WAITING_FOR_CONFIRMATION"
                 
-                # Cache confirmation in DesktopAutomationService so we can resume
-                self.desktop_service._pending_confirmations[session_id] = {
+                # Cache confirmation in correct service so we can resume
+                target_service = self.browser_service if (is_browser_tool and self.browser_service) else self.desktop_service
+                target_service._pending_confirmations[session_id] = {
                     "command": step.selected_tool,
                     "parameters": step.parameters,
                     "timestamp": time.time(),
@@ -151,8 +159,11 @@ class ExecutionEngine:
             try:
                 # Step timeout constraint (15.0s)
                 async with asyncio.timeout(self.step_timeout):
-                    # Invoke frozen Phase 6 DesktopAutomationService tool command (5.0s timeout internally)
-                    result_str = await self.desktop_service._run_tool_command(step.selected_tool, step.parameters)
+                    is_browser_tool = step.selected_tool in [b["name"] for b in BROWSER_TOOL_SCHEMAS]
+                    if is_browser_tool and self.browser_service:
+                        result_str = await self.browser_service._run_browser_action(session_id, step.selected_tool, step.parameters)
+                    else:
+                        result_str = await self.desktop_service._run_tool_command(step.selected_tool, step.parameters)
                     
                     if "error" in result_str.lower():
                         raise RuntimeError(result_str)

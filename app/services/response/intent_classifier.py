@@ -100,6 +100,25 @@ class IntentClassifier:
         if any(re.search(p, q_lower) for p in complex_patterns):
             return "complex_goal"
 
+        # Browser Action Classification (Phase 8)
+        browser_patterns = [
+            r"\b(open|launch|close)\s+(the\s+)?browser\b",
+            r"\b(navigate|go)\s+to\b",
+            r"\bopen\s+url\b",
+            r"\bclick\s+(button|link|element)\s+on\s+page\b",
+            r"\bclick\s+selector\b",
+            r"\btype\s+.+\s+in\s+browser\b",
+            r"\bread\s+(the\s+)?page\s+content\b",
+            r"\bextract\s+page\s+text\b",
+            r"\bswitch\s+(browser\s+)?tab\b",
+            r"\bclose\s+(browser\s+)?tab\b",
+            r"\bscroll\s+(up|down)\s+in\s+browser\b",
+            r"\bdownload\s+file\b",
+            r"\bupload\s+file\b"
+        ]
+        if any(re.search(p, q_lower) for p in browser_patterns):
+            return "browser_action"
+
         # Desktop Action Classification (Phase 6)
         desktop_patterns = [
             r"\b(open|launch)\s+(the\s+)?(notepad|chrome|vscode|explorer)\b",

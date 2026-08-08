@@ -43,9 +43,10 @@ class ChatService(BaseChatService):
     async def execute_chat(self, request: ChatRequest) -> str:
         session_id = request.session_id
         
-        # Intercept desktop action pending confirmations
+        # Intercept desktop and browser action pending confirmations
         from app.services.factory import ServiceFactory
         desktop_service = ServiceFactory.get_desktop_automation_service()
+        browser_service = ServiceFactory.get_browser_automation_service()
         agent_service = ServiceFactory.get_agent_service()
         
         if session_id in desktop_service._pending_confirmations:
@@ -54,6 +55,16 @@ class ChatService(BaseChatService):
                 result = await agent_service.execute_goal(request.message, session_id)
             else:
                 result = await desktop_service.execute_action(session_id, request.message)
+            await self.memory.add_message(session_id, "user", request.message)
+            await self.memory.add_message(session_id, "assistant", result)
+            return result
+
+        elif session_id in browser_service._pending_confirmations:
+            pending = browser_service._pending_confirmations[session_id]
+            if "agent_plan_id" in pending:
+                result = await agent_service.execute_goal(request.message, session_id)
+            else:
+                result = await browser_service.execute_action(session_id, request.message)
             await self.memory.add_message(session_id, "user", request.message)
             await self.memory.add_message(session_id, "assistant", result)
             return result
@@ -73,6 +84,13 @@ class ChatService(BaseChatService):
         # Intercept new desktop actions
         if intent == "desktop_action":
             result = await desktop_service.execute_action(session_id, request.message)
+            await self.memory.add_message(session_id, "user", request.message)
+            await self.memory.add_message(session_id, "assistant", result)
+            return result
+
+        # Intercept new browser actions
+        if intent == "browser_action":
+            result = await browser_service.execute_action(session_id, request.message)
             await self.memory.add_message(session_id, "user", request.message)
             await self.memory.add_message(session_id, "assistant", result)
             return result

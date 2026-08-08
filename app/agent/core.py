@@ -20,10 +20,12 @@ class AgentService:
     Orchestrator for JARVIS Agentic Intelligence.
     Manages plan generation, execution loops, and paused confirmation states.
     """
-    def __init__(self, llm: BaseLLM, cognitive_reasoner: CognitiveReasoner, desktop_service: DesktopAutomationService):
+    def __init__(self, llm: BaseLLM, cognitive_reasoner: CognitiveReasoner, 
+                 desktop_service: DesktopAutomationService, browser_service: Optional[Any] = None):
         self.planner = PlanningEngine(llm, cognitive_reasoner)
-        self.executor = ExecutionEngine(desktop_service)
+        self.executor = ExecutionEngine(desktop_service, browser_service)
         self.desktop_service = desktop_service
+        self.browser_service = browser_service
         self.active_plans: Dict[str, AgentPlan] = {}
         self.total_timeout = 60.0
 
@@ -35,8 +37,16 @@ class AgentService:
         q_lower = goal.lower().strip()
 
         # 1. Handle confirmation replies resuming paused plans
+        pending = None
+        confirming_service = None
         if session_id in self.desktop_service._pending_confirmations:
             pending = self.desktop_service._pending_confirmations[session_id]
+            confirming_service = self.desktop_service
+        elif self.browser_service and session_id in self.browser_service._pending_confirmations:
+            pending = self.browser_service._pending_confirmations[session_id]
+            confirming_service = self.browser_service
+
+        if pending:
             plan_id = pending.get("agent_plan_id")
             step_id = pending.get("agent_step_id")
             
@@ -48,15 +58,17 @@ class AgentService:
                 if q_lower in ["yes", "confirm", "go ahead", "y", "okay", "proceed", "sure"]:
                     logger.info(f"User confirmed step #{step_id} in plan {plan_id}. Resuming execution.")
                     
-                    # Execute whitelisted command via DesktopAutomationService
                     cmd = pending["command"]
                     params = pending["parameters"]
-                    del self.desktop_service._pending_confirmations[session_id]
+                    del confirming_service._pending_confirmations[session_id]
                     
                     try:
                         step.status = "RUNNING"
                         step.start_time = time.time()
-                        result_str = await self.desktop_service._run_tool_command(cmd, params)
+                        if confirming_service == self.browser_service:
+                            result_str = await self.browser_service._run_browser_action(session_id, cmd, params)
+                        else:
+                            result_str = await self.desktop_service._run_tool_command(cmd, params)
                         step.end_time = time.time()
                         
                         if "error" in result_str.lower():
@@ -91,7 +103,7 @@ class AgentService:
 
                 elif q_lower in ["no", "cancel", "stop", "n", "dont", "don't"]:
                     logger.info(f"User rejected step #{step_id} in plan {plan_id}. Cancelling plan.")
-                    del self.desktop_service._pending_confirmations[session_id]
+                    del confirming_service._pending_confirmations[session_id]
                     if step:
                         step.status = "CANCELLED"
                         step.error = "User cancelled execution."

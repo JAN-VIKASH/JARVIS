@@ -105,7 +105,20 @@ class ServiceFactory:
             ServiceFactory._agent_service = AgentService(
                 llm=ServiceFactory.get_llm(),
                 cognitive_reasoner=ServiceFactory.get_cognitive_reasoner(),
-                desktop_service=ServiceFactory.get_desktop_automation_service()
+                desktop_service=ServiceFactory.get_desktop_automation_service(),
+                browser_service=ServiceFactory.get_browser_automation_service()
             )
         return ServiceFactory._agent_service
+
+    _browser_automation_service = None
+
+    @staticmethod
+    def get_browser_automation_service():
+        """
+        Resolves and returns the active BrowserAutomationService instance (singleton).
+        """
+        if ServiceFactory._browser_automation_service is None:
+            from app.services.browser_automation_service import BrowserAutomationService
+            ServiceFactory._browser_automation_service = BrowserAutomationService()
+        return ServiceFactory._browser_automation_service
 

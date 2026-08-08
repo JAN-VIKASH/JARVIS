@@ -1,9 +1,9 @@
 # JARVIS Folder Structure
 
 * **Last Updated**: 2026-08-08
-* **Current Phase**: Phase 5.3 (User Preferences, Habits & Tasks)
+* **Current Phase**: Phase 6 (Desktop Automation)
 * **Status**: Freeze
-* **Version**: v0.5.3
+* **Version**: v0.6
 
 ---
 
@@ -98,6 +98,7 @@ JARVIS/
 │   │   │   └── response_validator.py # Fact-checking & length validation
 │   │   │
 │   │   ├── chat_service.py     # Main ChatService coordinator facade
+│   │   ├── desktop_automation_service.py # Desktop automation coordinator
 │   │   ├── factory.py          # ServiceFactory DI registry
 │   │   └── task_service.py     # TaskService lifecycle coordinator
 │   │
@@ -158,6 +159,7 @@ JARVIS/
 │
 ├── tests/                      # Testing Framework Suite
 │   └── cognitive/              # Integration and unit tests
+│       ├── test_desktop_automation.py # Unit and integration tests for desktop actions
 │       ├── test_event_lifecycle.py # Calendar update & duplicate tests
 │       ├── test_graph_engine.py    # Knowledge graph & alias tests
 │       ├── test_habits_profile.py  # Habits and routines user profile tests
@@ -182,6 +184,9 @@ JARVIS/
 │   ├── test_voice.py           # Voice engine tests
 │   ├── voice_controller.py     # Console audio PTT helper
 │   └── voice_service.py        # Pipeline orchestrator
+├── tools/                      # Desktop control modules
+│   ├── desktop_tool.py         # Native PyAutoGUI/PyGetWindow tool
+│   └── registry.py             # Closed tool schemas registry
 │
 ├── .env.example                # Configuration template
 ├── .gitignore                  # Git settings
@@ -245,3 +250,11 @@ JARVIS/
   * `voice_service.py` (PTT pipeline orchestrator).
   * `download_models.py` (downloads Piper binary & Whisper weights).
 * **Dependencies**: `app/services/factory.py`.
+
+### Directory: `tools/`
+* **Purpose**: Desktop GUI and OS automation control.
+* **Responsibilities**: Performs OS operations such as window focusing, mouse/keyboard simulation, and program launching under security limits.
+* **Key Files**:
+  * `desktop_tool.py` (native system execution wrapper).
+  * `registry.py` (schema definition files).
+* **Dependencies**: None.

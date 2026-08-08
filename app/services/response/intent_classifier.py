@@ -90,6 +90,19 @@ class IntentClassifier:
         if any(re.search(p, q_lower) for p in event_patterns):
             return "event_query"
 
+        # Desktop Action Classification (Phase 6)
+        desktop_patterns = [
+            r"\b(open|launch)\s+(the\s+)?(notepad|chrome|vscode|explorer)\b",
+            r"\b(move\s+(the\s+)?mouse|click\s+(the\s+)?mouse|click\s+at|double\s+click|drag\s+(the\s+)?mouse)\b",
+            r"\b(type\s+text|type\s+\w+|press\s+(the\s+)?key|press\s+enter|press\s+space|hit\s+hotkey|execute\s+hotkey)\b",
+            r"\b(minimize|maximize|close|focus)\s+(the\s+)?window\b",
+            r"\b(list\s+windows|show\s+active\s+window|active\s+window\s+title)\b",
+            r"\b(lock\s+(the\s+)?(screen|workstation)|take\s+(a\s+)?screenshot|screenshot|mute\s+volume|set\s+volume|adjust\s+volume)\b",
+            r"\b(set\s+brightness|toggle\s+audio|audio\s+output\s+device)\b"
+        ]
+        if any(re.search(p, q_lower) for p in desktop_patterns):
+            return "desktop_action"
+
         # 2. Memory Recall (asking about stored memories/facts)
         recall_patterns = [
             r"^(what|who|where|when|which|how|do)\s+(is|was|are|were|do|know|remember|recall)\s+(my|favorite|favourite|previously|previously\s+my)\b",

@@ -43,10 +43,27 @@ class ChatService(BaseChatService):
     async def execute_chat(self, request: ChatRequest) -> str:
         session_id = request.session_id
         
+        # Intercept desktop action pending confirmations
+        from app.services.factory import ServiceFactory
+        desktop_service = ServiceFactory.get_desktop_automation_service()
+        if session_id in desktop_service._pending_confirmations:
+            result = await desktop_service.execute_action(session_id, request.message)
+            await self.memory.add_message(session_id, "user", request.message)
+            await self.memory.add_message(session_id, "assistant", result)
+            return result
+        
         # 1. Intent Classification
         classification_start = time.perf_counter()
         intent = IntentClassifier.classify(request.message)
         classification_latency = time.perf_counter() - classification_start
+        
+        # Intercept new desktop actions
+        if intent == "desktop_action":
+            result = await desktop_service.execute_action(session_id, request.message)
+            await self.memory.add_message(session_id, "user", request.message)
+            await self.memory.add_message(session_id, "assistant", result)
+            return result
+
         
         # 2. Cache Lookup (only for memory recall and simple facts)
         if intent in ("memory_recall", "simple_fact_question"):

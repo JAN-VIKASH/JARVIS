@@ -6,9 +6,9 @@ JARVIS is a production-grade, local-first, low-latency personal AI assistant ins
 
 ## Current Status
 
-* **Version**: v0.5.3
-* **Current Implementation Freeze**: Phase 5.3 (User Preferences, Habits & Tasks)
-* **Current Next Phase**: Phase 6 (Desktop Automation)
+* **Version**: v0.6
+* **Current Implementation Freeze**: Phase 6 (Desktop Automation)
+* **Current Next Phase**: Phase 7 (Browser Automation)
 
 ### Implementation Roadmap Checklist
 - [x] **Phase 1**: Backend Foundation (v0.1)
@@ -20,8 +20,9 @@ JARVIS is a production-grade, local-first, low-latency personal AI assistant ins
 - [x] **Phase 5.1.1**: Event Lifecycle & Timeline Intelligence (v0.5.1.1)
 - [x] **Phase 5.2**: Knowledge Graph, User Profiles & Relational Memory (v0.5.2)
 - [x] **Phase 5.3**: User Preferences, Habits & Tasks (v0.5.3)
-- [ ] **Phase 6**: Desktop Automation (v0.6) (⚡ *NEXT*)
-- [ ] **Phases 7–12**: Browser Automation, Vision, Wake Word, GUI, Multi-Agent, Cloud Sync (⏳ *PLANNED*)
+- [x] **Phase 6**: Desktop Automation (v0.6)
+- [ ] **Phase 7**: Browser Automation (v0.7) (⚡ *NEXT*)
+- [ ] **Phases 8–12**: Vision, Wake Word, GUI, Multi-Agent, Cloud Sync (⏳ *PLANNED*)
 
 ---
 

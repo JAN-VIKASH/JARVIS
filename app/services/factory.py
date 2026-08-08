@@ -50,3 +50,16 @@ class ServiceFactory:
         from memory.memory_factory import MemoryFactory
         sqlite_repo = MemoryFactory.get_sqlite_repo()
         return TaskService(sqlite_repo)
+
+    _desktop_automation_service = None
+
+    @staticmethod
+    def get_desktop_automation_service():
+        """
+        Resolves and returns the active DesktopAutomationService instance (singleton).
+        """
+        if ServiceFactory._desktop_automation_service is None:
+            from app.services.desktop_automation_service import DesktopAutomationService
+            ServiceFactory._desktop_automation_service = DesktopAutomationService()
+        return ServiceFactory._desktop_automation_service
+

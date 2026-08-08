@@ -1,10 +1,10 @@
 # JARVIS Roadmap
 
 * **Last Updated**: 2026-08-08
-* **Latest Completed Phase**: Phase 5.3 (User Preferences, Habits & Tasks)
-* **Next Phase**: Phase 6 (Desktop Automation)
+* **Latest Completed Phase**: Phase 6 (Desktop Automation)
+* **Next Phase**: Phase 7 (Browser Automation)
 * **Status**: Freeze
-* **Version**: v0.5.3
+* **Version**: v0.6
 
 ---
 
@@ -14,7 +14,7 @@
 [✅ Phase 1: Foundation] ──> [✅ Phase 2: Groq LLM] ──> [✅ Phase 3: Voice PTT]
                                                                 │
                                                                 v
-[Planned Phase 7: Browser] <── [⚡ Next Phase 6: Desktop] <── [✅ Phase 5.3: Habits & Tasks] <── [✅ Phase 5.2: Relational Graph] <── [✅ Phase 5.1.1: Event Lifecycle] <── [✅ Phase 5.1: Event Engine] <── [✅ Phase 4: Long Memory]
+[Planned Phase 8: Vision] <── [⚡ Next Phase 7: Browser] <── [✅ Phase 6: Desktop] <── [✅ Phase 5.3: Habits & Tasks] <── [✅ Phase 5.2: Relational Graph] <── [✅ Phase 5.1.1: Event Lifecycle] <── [✅ Phase 5.1: Event Engine] <── [✅ Phase 4: Long Memory]
 ```
 
 ---
@@ -103,15 +103,22 @@
   - Recurring schedule engine resolving daily, weekly, weekday, and monthly (with overflow day support) occurrences.
   - Temporal timelines expansion integrating recurring occurrences on-the-fly.
 
+### ✅ Phase 6: Desktop Automation (v0.6)
+* **Goal**: OS desktop navigation and input automation.
+* **Features**:
+  - Mouse pointer move, click, double-click, drag coordinates simulation via PyAutoGUI.
+  - Keyboard text typing and hotkey combination execution.
+  - Active window listing, focusing, minimizing, maximizing, and closing via PyGetWindow.
+  - Secure application launching (notepad, chrome, vscode, explorer) with a strict allowed executable whitelist.
+  - Volume control and workstation locking system features.
+  - Safe in-memory confirmation state manager expiring after 120 seconds.
+  - Verified target window focusing guards preventing input leakage.
+
 ---
 
 ## Future Roadmap
 
-### ⚡ Next Phase 6: Desktop Automation (v0.6) [PLANNED]
-* **Goal**: OS desktop navigation.
-* **Details**: Run GUI-level operations, control mouse, keyboard, and automate administrative tasks.
-
-### Phase 7: Browser Automation (v0.7) [PLANNED]
+### ⚡ Next Phase 7: Browser Automation (v0.7) [PLANNED]
 * **Goal**: Browser scraping and UI interactions.
 * **Details**: Integrate Playwright to navigate websites, complete checkouts, and pull dynamic HTML assets.
 

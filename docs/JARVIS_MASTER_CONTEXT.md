@@ -1,10 +1,10 @@
 # JARVIS Master Context - Developer Handbook
 
 * **Last Updated**: 2026-08-08
-* **Latest Completed Phase**: Phase 5.3 (User Preferences, Habits & Tasks)
-* **Next Phase**: Phase 6 (Desktop Automation) [PLANNED]
+* **Latest Completed Phase**: Phase 6 (Desktop Automation)
+* **Next Phase**: Phase 7 (Browser Automation) [PLANNED]
 * **Status**: Freeze
-* **Version**: v0.5.3
+* **Version**: v0.6
 
 ---
 
@@ -37,7 +37,7 @@ Coding Standards & Naming Conventions (coding_guidelines.md)
 HTTP & Service Interfaces (api.md)
   │
   ▼
-Current Phase Description (phases/phase5.md)
+Current Phase Description (phases/phase6.md)
 ```
 
 ---

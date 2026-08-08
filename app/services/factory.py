@@ -63,3 +63,33 @@ class ServiceFactory:
             ServiceFactory._desktop_automation_service = DesktopAutomationService()
         return ServiceFactory._desktop_automation_service
 
+    _cognitive_reasoner = None
+    _memory_summary_service = None
+
+    @staticmethod
+    def get_cognitive_reasoner():
+        """
+        Resolves and returns the active CognitiveReasoner instance (singleton).
+        """
+        if ServiceFactory._cognitive_reasoner is None:
+            from app.services.cognitive_reasoner import CognitiveReasoner
+            ServiceFactory._cognitive_reasoner = CognitiveReasoner(
+                llm=ServiceFactory.get_llm(),
+                memory_service=ServiceFactory.get_memory_service(),
+                task_service=ServiceFactory.get_task_service()
+            )
+        return ServiceFactory._cognitive_reasoner
+
+    @staticmethod
+    def get_memory_summary_service():
+        """
+        Resolves and returns the active MemorySummaryService instance (singleton).
+        """
+        if ServiceFactory._memory_summary_service is None:
+            from app.services.memory_summary_service import MemorySummaryService
+            ServiceFactory._memory_summary_service = MemorySummaryService(
+                llm=ServiceFactory.get_llm(),
+                memory_service=ServiceFactory.get_memory_service()
+            )
+        return ServiceFactory._memory_summary_service
+

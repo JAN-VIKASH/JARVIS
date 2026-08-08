@@ -28,6 +28,14 @@ class MemoryFactory:
     _conflict_resolver = None
     _decay_service = None
     _memory_service = None
+    _adaptive_learner = None
+
+    @classmethod
+    def get_adaptive_learner(cls):
+        if cls._adaptive_learner is None:
+            from memory.scorer import AdaptiveImportanceLearner
+            cls._adaptive_learner = AdaptiveImportanceLearner(cls.get_scorer())
+        return cls._adaptive_learner
 
     @classmethod
     def get_sqlite_repo(cls) -> SQLiteMemoryRepository:

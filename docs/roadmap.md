@@ -14,7 +14,7 @@
 [✅ Phase 1: Foundation] ──> [✅ Phase 2: Groq LLM] ──> [✅ Phase 3: Voice PTT]
                                                                 │
                                                                 v
-[Planned Phase 8: Vision] <── [⚡ Next Phase 7: Browser] <── [✅ Phase 6: Desktop] <── [✅ Phase 5.3: Habits & Tasks] <── [✅ Phase 5.2: Relational Graph] <── [✅ Phase 5.1.1: Event Lifecycle] <── [✅ Phase 5.1: Event Engine] <── [✅ Phase 4: Long Memory]
+[Planned Phase 8: Vision] <── [⚡ Next Phase 7: Browser] <── [✅ Phase 6: Desktop] <── [✅ Reconciled Phase 5: Cognitive Core] <── [✅ Phase 5.3: Habits & Tasks] <── [✅ Phase 5.2: Relational Graph] <── [✅ Phase 5.1.1: Event Lifecycle] <── [✅ Phase 5.1: Event Engine] <── [✅ Phase 4: Long Memory]
 ```
 
 ---
@@ -102,6 +102,16 @@
   - User habits and routines profile engine ignoring isolated event extractions.
   - Recurring schedule engine resolving daily, weekly, weekday, and monthly (with overflow day support) occurrences.
   - Temporal timelines expansion integrating recurring occurrences on-the-fly.
+
+### ✅ Reconciled Phase 5: Cognitive Intelligence Core (v0.6.1)
+* **Goal**: Reconcile original Phase 5 capability gaps (Memory Lifecycle, Summaries, Compression, Adaptive Scorer, and Cognitive Reasoner) while preserving Phase 6 baseline.
+* **Features**:
+  * Unified `CognitiveReasoner` coordinating cross-domain reasoning (facts, preferences, graph, tasks, events) and resolving context conflicts.
+  * `AdaptiveContextBuilder` dynamically budgeting prompt token limits based on query intents.
+  * Failure-Safe Conversation history compression summarizes oldest turns into Notes and prunes raw conversation table rows.
+  * `MemorySummaryService` generating concise dialogue summaries using LLM provider injection.
+  * `AdaptiveImportanceLearner` dynamically adjusting memory importance using relevance scores, explicit signals, elapsed time, and repeated access counts.
+  * Generic Memory Lifecycle manual APIs for active/archived/deleted states of facts, preferences, goals, and notes.
 
 ### ✅ Phase 6: Desktop Automation (v0.6)
 * **Goal**: OS desktop navigation and input automation.

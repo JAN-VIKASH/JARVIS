@@ -82,196 +82,32 @@ class ChatService(BaseChatService):
         if intent in ("memory_update", "task_create", "task_update", "habit_update"):
             self._response_cache.invalidate_session(session_id)
 
-        # 4. Memory Context Retrieval
+        # 4. Memory Context Retrieval & Cognitive Reasoning
         retrieval_start = time.perf_counter()
-        long_term_context = ""
-        semantic_context = ""
-        profile_context = ""
-        graph_context = ""
-        
         try:
-            long_term_context = await self.memory_service.retrieve_long_term_context(request.message)
-            semantic_context = await self.memory_service.retrieve_semantic_context(request.message)
-            
-            # Fetch User Profile Context
-            if settings.ENABLE_USER_PROFILE and hasattr(self.memory_service, "user_profile_engine") and self.memory_service.user_profile_engine:
-                prof_data = await self.memory_service.user_profile_engine.get_profile_context(session_id)
-                if prof_data:
-                    profile_context = "\n".join(f"- {k}: {v}" for k, v in prof_data.items())
-                    
-            # Fetch Knowledge Graph Context
-            if settings.ENABLE_GRAPH and hasattr(self.memory_service, "graph_service") and self.memory_service.graph_service:
-                seed_entities = []
-                # Pronoun referent resolution
-                if settings.ENABLE_ALIAS_RESOLUTION and hasattr(self.memory_service, "pronoun_resolver") and self.memory_service.pronoun_resolver:
-                    try:
-                        recent_convs = await self.memory_service.sqlite_repo.list_conversations(session_id, limit=5)
-                        recent_msg_list = [{"role": c["role"], "content": c["content"]} for c in recent_convs]
-                        ref_ent = await self.memory_service.pronoun_resolver.resolve_referent(request.message, recent_msg_list)
-                        if ref_ent:
-                            seed_entities.append(ref_ent["canonical_name"])
-                    except Exception as ex_pronoun:
-                        logger.warning(f"Failed pronoun resolution check: {ex_pronoun}")
-                
-                # Scan query for entity names
-                try:
-                    all_entities = await self.memory_service.entity_repo.list_entities(limit=200)
-                    for ent in all_entities:
-                        if ent["canonical_name"].lower() in request.message.lower() and ent["canonical_name"] not in seed_entities:
-                            seed_entities.append(ent["canonical_name"])
-                except Exception as ex_ent:
-                    logger.warning(f"Failed entity name matching: {ex_ent}")
-                    
-                if seed_entities:
-                    facts = await self.memory_service.graph_service.expand_context(seed_entities, max_depth=2)
-                    if facts:
-                        graph_context = "\n".join(facts)
-        except Exception as graph_err:
-            logger.error(f"Error retrieving advanced cognitive contexts, falling back: {graph_err}", exc_info=True)
-            # Fallback to standard context retrieval
-            try:
-                long_term_context = await self.memory_service.retrieve_long_term_context(request.message)
-                semantic_context = await self.memory_service.retrieve_semantic_context(request.message)
-            except Exception:
-                pass
-
-        # Dynamic Token Budgeting (Priority order: Profile > Direct > Semantic > Graph > Timeline)
-        max_chars = 16000
-        current_chars = 0
-        
-        # 1. User Profile
-        if profile_context:
-            if current_chars + len(profile_context) <= max_chars:
-                current_chars += len(profile_context)
-            else:
-                profile_context = ""
-                
-        # 2. Direct Memory
-        if long_term_context:
-            if current_chars + len(long_term_context) <= max_chars:
-                current_chars += len(long_term_context)
-            else:
-                long_term_context = ""
-                
-        # 3. Semantic Memory
-        if semantic_context:
-            if current_chars + len(semantic_context) <= max_chars:
-                current_chars += len(semantic_context)
-            else:
-                semantic_context = ""
-                
-        # 4. Graph Context
-        if graph_context:
-            if current_chars + len(graph_context) <= max_chars:
-                current_chars += len(graph_context)
-            else:
-                graph_context = ""
+            cognitive_reasoner = ServiceFactory.get_cognitive_reasoner()
+            budgeted_contexts = await cognitive_reasoner.reason_over_context(
+                request.message, session_id, intent
+            )
+            profile_context = budgeted_contexts.get("profile_context", "")
+            long_term_context = budgeted_contexts.get("long_term_context", "")
+            semantic_context = budgeted_contexts.get("semantic_context", "")
+            graph_context = budgeted_contexts.get("graph_context", "")
+            timeline_context = budgeted_contexts.get("timeline_context", "")
+            task_context = budgeted_contexts.get("task_context", "")
+        except Exception as reasoner_err:
+            logger.error(f"CognitiveReasoner failed, falling back: {reasoner_err}", exc_info=True)
+            profile_context = ""
+            long_term_context = ""
+            semantic_context = ""
+            graph_context = ""
+            timeline_context = ""
+            task_context = ""
 
         retrieval_latency = time.perf_counter() - retrieval_start
  
-        # 5. Prompt Construction and Timeline Context Retrieval
+        # 5. Prompt Construction
         prompt_start = time.perf_counter()
-        
-        timeline_context = ""
-        if intent in ("schedule_query", "timeline_query", "event_query"):
-            from app.services.cognitive.timeline_engine import TimelineEngine
-            from datetime import timedelta
-            timeline_engine = TimelineEngine(self.memory_service.event_repository)
-            
-            view = "upcoming"
-            ref_time = datetime.utcnow()
-            q_lower = request.message.lower()
-            
-            if "today" in q_lower:
-                view = "daily"
-                ref_time = datetime.utcnow()
-            elif "tomorrow" in q_lower:
-                view = "daily"
-                ref_time = datetime.utcnow() + timedelta(days=1)
-            elif "yesterday" in q_lower:
-                view = "daily"
-                ref_time = datetime.utcnow() - timedelta(days=1)
-            elif "week" in q_lower:
-                view = "weekly"
-            elif "month" in q_lower:
-                view = "monthly"
-            elif "upcoming" in q_lower or "coming" in q_lower or "next" in q_lower or "future" in q_lower:
-                view = "upcoming"
-            elif "overdue" in q_lower or "missed" in q_lower or "late" in q_lower:
-                view = "overdue"
-            elif "completed" in q_lower or "done" in q_lower or "finished" in q_lower:
-                view = "completed"
-            elif "cancelled" in q_lower or "canceled" in q_lower:
-                view = "cancelled"
-            elif "milestone" in q_lower or "deadline" in q_lower or "project" in q_lower:
-                view = "project"
-            elif "timeline" in q_lower or "history" in q_lower:
-                view = "all"
-                
-            events = await timeline_engine.generate_timeline(session_id, view=view, start_date=ref_time)
-            if events:
-                lines = []
-                for ev in events:
-                    start_str = ev["start_time"].isoformat()
-                    end_str = ev["end_time"].isoformat() if ev.get("end_time") else "None"
-                    lines.append(
-                        f"- [{ev['event_type'].upper()}] {ev['title']}: "
-                        f"Start: {start_str}, End: {end_str}, "
-                        f"Status: {ev['status']}, Importance: {ev['importance']}, "
-                        f"Confidence: {ev.get('confidence', 1.0)}"
-                    )
-                timeline_context = "\n".join(lines)
-            else:
-                timeline_context = "No events scheduled or found for this period."
-
-        # Budget Timeline Context
-        if timeline_context:
-            if current_chars + len(timeline_context) <= max_chars:
-                current_chars += len(timeline_context)
-            else:
-                timeline_context = "No events scheduled or found for this period."
-
-        # 5a. Retrieve Task Context (Phase 5.3)
-        task_context = ""
-        if intent in ("task_query", "task_update", "task_create"):
-            try:
-                from app.services.factory import ServiceFactory
-                task_service = ServiceFactory.get_task_service()
-                
-                q_lower = request.message.lower()
-                status_filter = None
-                if "completed" in q_lower or "done" in q_lower:
-                    status_filter = "completed"
-                elif "cancelled" in q_lower:
-                    status_filter = "cancelled"
-                elif "in progress" in q_lower or "active" in q_lower:
-                    status_filter = "in_progress"
-                elif "pending" in q_lower:
-                    status_filter = "pending"
-                    
-                tasks = await task_service.list_tasks(session_id, status=status_filter)
-                if tasks:
-                    lines = []
-                    for t in tasks:
-                        due_str = t["due_date"].isoformat() if t.get("due_date") else "None"
-                        lines.append(
-                            f"- Task #{t['id']}: {t['title']} (status: {t['status']}, "
-                            f"importance: {t['importance']}, due: {due_str}, "
-                            f"overdue: {t['is_overdue']}, upcoming: {t['is_upcoming']})"
-                        )
-                    task_context = "\n".join(lines)
-                else:
-                    task_context = "No tasks found."
-            except Exception as e:
-                logger.warning(f"Failed to retrieve task context: {e}")
-
-        # Budget Task Context
-        if task_context:
-            if current_chars + len(task_context) <= max_chars:
-                current_chars += len(task_context)
-            else:
-                task_context = ""
-
         system_prompt = self.prompt_builder.build_system_prompt(
             intent=intent,
             long_term_context=long_term_context,
@@ -341,9 +177,14 @@ class ChatService(BaseChatService):
         await self.memory.add_message(session_id, "user", request.message)
         await self.memory.add_message(session_id, "assistant", validated_response)
         
-        # Save exchange and extract facts in background (non-blocking)
+        # Save exchange, extract facts, and compress history in background (non-blocking)
         asyncio.create_task(self.memory_service.save_exchange(session_id, request.message, validated_response))
         asyncio.create_task(self.memory_service.extract_and_save_memories(request.message, session_id))
+        try:
+            summary_service = ServiceFactory.get_memory_summary_service()
+            asyncio.create_task(summary_service.compress_session_history(session_id))
+        except Exception as comp_err:
+            logger.warning(f"Failed to spawn conversation compression task: {comp_err}")
 
         # 14. Emit telemetry logging
         word_count = len(validated_response.split())

@@ -1,10 +1,10 @@
-# Phase 5: Cognitive Intelligence Engine (Phases 5.1, 5.1.1, 5.2, & 5.3)
+# Phase 5: Cognitive Intelligence Engine (Phases 5.1, 5.1.1, 5.2, 5.3, & Reconciled Phase 5)
 
 * **Last Updated**: 2026-08-08
-* **Latest Completed Phase**: Phase 5.3 (User Preferences, Habits & Tasks)
-* **Next Phase**: Phase 6 (Desktop Automation) [PLANNED]
+* **Latest Completed Phase**: Reconciled Phase 5 (Cognitive Intelligence Core Completion)
+* **Next Phase**: Phase 6 (Desktop Automation) [COMPLETED] / Phase 7 (Browser Automation) [PLANNED]
 * **Status**: Freeze
-* **Version**: v0.5.3
+* **Version**: v0.6.1
 
 ---
 
@@ -43,40 +43,47 @@ Enabling time-aware schedule tracking, nickname fuzzy resolutions, resolving pro
   * `tests/cognitive/test_task_operations.py`: Task CRUD validation tests.
   * `tests/cognitive/test_recurrence_engine.py`: Date calculations and boundary tests.
   * `tests/cognitive/test_habits_profile.py`: Habit preference updates tests.
+  * `app/services/memory_summary_service.py`: Dialogue summaries and failure-safe history compression. [NEW]
+  * `app/services/cognitive_reasoner.py`: Unified CognitiveReasoner orchestrator and AdaptiveContextBuilder. [NEW]
+  * `tests/cognitive/test_reconciled_phase5.py`: Reconciled Phase 5 integration tests. [NEW]
 * **Modified**:
-  * `app/config/settings.py`: Default settings configurations for graph features.
+  * `app/config/settings.py`: Default settings configurations for graph features and compression settings.
   * `app/database/models.py`: Declared tables for entities, edges, profiles, events, and tasks (with recurrence and session columns).
   * `app/database/migrations.py`: Implemented dynamic PRAGMA-based async schema upgrades.
-  * `memory/repository.py` & `memory/sqlite_repository.py`: Implemented CRUD task operations and derived fields.
-  * `memory/memory_service.py`: Injected new repositories into recall layers, passing session IDs safely to background threads.
+  * `memory/repository.py` & `memory/sqlite_repository.py`: Implemented CRUD task operations, lifecycle APIs, access metrics, and note/goal version increments.
+  * `memory/scorer.py`: Integrated AdaptiveImportanceLearner.
+  * `memory/memory_service.py`: Injected new repositories into recall layers, passing session IDs safely to background threads, and hooked search access tracking.
   * `memory/memory_factory.py`: Configured singleton instances registration.
-  * `app/services/chat_service.py`: Structured context assembly workflows, budgeting, and cache invalidation.
-  * `app/services/factory.py`: Registered TaskService constructor DI.
+  * `app/services/chat_service.py`: Structured context assembly workflows, delegating token budgeting and retrieval to CognitiveReasoner.
+  * `app/services/factory.py`: Registered TaskService, CognitiveReasoner, and MemorySummaryService constructor DI.
 
 ## Architecture
 ```text
 ChatService.execute_chat()
   │
-  ├── PronounResolver.resolve_referent() ──> Identifies seed entities
-  ├── UserProfileEngine.get_profile_context()
-  ├── KnowledgeGraphService.expand_context() ──> Resolves entity neighborhood
-  ├── TaskService.list_tasks() ──> Retrieves active user tasks
-  ├── TimelineEngine.generate_timeline() ──> Expands recurring occurrences on-the-fly via RecurringScheduleEngine
-  ├── ContextBuilder.build_context() ──> Budgets context up to token limit (4000)
+  ├── CognitiveReasoner.reason_over_context()
+  │     ├── IntentClassifier.classify()
+  │     ├── PronounResolver.resolve_referent() ──> Identifies seed entities
+  │     ├── UserProfileEngine.get_profile_context()
+  │     ├── KnowledgeGraphService.expand_context() ──> Resolves entity neighborhood
+  │     ├── TimelineEngine.generate_timeline()
+  │     ├── TaskService.list_tasks() ──> Retrieves active user tasks
+  │     ├── MemorySearchService / sqlite_repo / chroma_repo (Semantic Memories)
+  │     └── AdaptiveContextBuilder.build_adaptive_context() ──> Dynamic budgeting up to token limit (4000)
   │
   ├── Call LLM Provider with Budgeted Context
   │
-  └── MemoryService.save_message() (Async background task)
-        │
-        └── BackgroundJobManager enqueues (propagating session_id):
-              ├── GraphExtractor.extract_graph() ──> Entities/edges to DB
-              └── UserProfileEngine.extract_and_update_profile() ──> Evolves profile (including habits/routines)
+  ├── MemoryService.save_exchange() (Async background task)
+  │     └── track_access_and_learn() ──> updates access metrics & runs AdaptiveImportanceLearner
+  │
+  └── MemorySummaryService.compress_session_history() (Async background task check)
+        └── summarizes oldest turns using BaseLLM DI & prunes logs from SQLite
 ```
 
 ## Verification
 Run all cognitive unit tests:
 ```bash
-venv\Scripts\python -m unittest tests.cognitive.test_event_lifecycle tests.cognitive.test_graph_engine tests.cognitive.test_temporal_engine tests.cognitive.test_task_operations tests.cognitive.test_recurrence_engine tests.cognitive.test_habits_profile
+venv\Scripts\python -m unittest discover -s tests/cognitive
 ```
 
 ## Known Limitations

@@ -40,3 +40,54 @@ class ImportanceScorer:
             max_score = min(max_score + 5, 100)
             
         return max_score
+
+
+class AdaptiveImportanceLearner:
+    """
+    Controlled scoring mechanism based on:
+    - retrieval relevance (similarity distance/score)
+    - repeated meaningful access (access count)
+    - explicit user importance signals (query keywords)
+    - existing importance
+    
+    Prevents runaway inflation by capping the maximum boost.
+    """
+    def __init__(self, heuristic_scorer: ImportanceScorer):
+        self.heuristic_scorer = heuristic_scorer
+        self.importance_keywords = [
+            "remember", "crucial", "important", "essential", "never forget",
+            "always keep in mind", "save this", "critical", "mandatory"
+        ]
+
+    def compute_adaptive_score(
+        self,
+        current_importance: int,
+        access_count: int,
+        relevance_score: float,
+        user_query: str
+    ) -> int:
+        """
+        Calculates adapted importance score. Bounded to prevent repeated automatic
+        retrievals from pushing everything to 100.
+        """
+        boost = 0
+        query_lower = user_query.lower()
+        
+        # 1. Explicit user importance signal
+        explicit_signal = any(word in query_lower for word in self.importance_keywords)
+        if explicit_signal:
+            boost += 15
+
+        # 2. Repeated meaningful access & relevance boost
+        # We only boost if relevance is high (e.g. relevance_score > 0.6)
+        if relevance_score > 0.6:
+            # Relevancy component: up to +10
+            relevance_boost = int(relevance_score * 10)
+            
+            # Access frequency component: capped at +15
+            access_boost = min((access_count // 3) * 2, 15)
+            
+            boost += (relevance_boost + access_boost)
+            
+        new_importance = min(max(current_importance, current_importance + boost), 100)
+        return new_importance

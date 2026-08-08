@@ -81,7 +81,7 @@ class BaseMemoryRepository(ABC):
         pass
 
     @abstractmethod
-    async def search_tasks(self, session_id: str, query: str, limit: int = 10) -> List[Dict[str, Any]]:
+    async def search_tasks(self, session_id: Optional[str], query: str, limit: int = 10) -> List[Dict[str, Any]]:
         """Searches tasks within a session."""
         pass
 
@@ -175,6 +175,46 @@ class BaseMemoryRepository(ABC):
     @abstractmethod
     async def get_record_by_id_and_type(self, m_type: str, record_id: int) -> Optional[Dict[str, Any]]:
         """Retrieves a relational record's full state by type and ID."""
+        pass
+
+    @abstractmethod
+    async def record_accesses(self, type_id_pairs: List[tuple]) -> None:
+        """Executes minimal, isolated updates on access metrics (access_count, last_accessed_at)."""
+        pass
+
+    @abstractmethod
+    async def update_importance(self, m_type: str, record_id: int, new_importance: int) -> bool:
+        """Updates the importance score of a specific memory record."""
+        pass
+
+    @abstractmethod
+    async def set_memory_active_status(self, m_type: str, record_id: int, is_active: bool) -> bool:
+        """Toggles the active status of a memory record."""
+        pass
+
+    @abstractmethod
+    async def set_memory_archived_status(self, m_type: str, record_id: int, is_archived: bool) -> bool:
+        """Toggles the archived status of a memory record."""
+        pass
+
+    @abstractmethod
+    async def delete_memory_permanently(self, m_type: str, record_id: int) -> bool:
+        """Permanently deletes a memory record by removing it from the database."""
+        pass
+
+    @abstractmethod
+    async def get_conversation_count(self, session_id: str) -> int:
+        """Returns the total number of dialogue records in a session."""
+        pass
+
+    @abstractmethod
+    async def get_oldest_conversations(self, session_id: str, limit: int) -> List[Dict[str, Any]]:
+        """Retrieves the oldest dialogue records in a session."""
+        pass
+
+    @abstractmethod
+    async def delete_conversations_by_ids(self, ids: List[int]) -> bool:
+        """Deletes dialogue records by their IDs."""
         pass
 
 

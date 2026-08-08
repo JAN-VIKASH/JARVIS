@@ -91,6 +91,8 @@ class MemoryService:
         self.user_profile_engine = user_profile_engine
         self.pronoun_resolver = pronoun_resolver
         self.background_job_manager = background_job_manager
+        from memory.memory_factory import MemoryFactory
+        self.entity_repo = MemoryFactory.get_entity_repo()
 
         if not self.background_job_manager:
             try:
@@ -404,6 +406,8 @@ class MemoryService:
                 else:
                     context_lines.append(f"[Memory (category: {res['category']})]: {res['value']}")
                     
+            if results:
+                asyncio.create_task(self.track_access_and_learn(query, results))
             return "\n".join(context_lines)
         except Exception as e:
             logger.error(f"Failure Isolation: Context retrieval error ignored: {e}", exc_info=True)
@@ -426,6 +430,8 @@ class MemoryService:
                     lines.append(f"[Long-Term Memory ({m_type})]: {res.get('title')} - {res.get('description')} (status: {res.get('status')})")
                 elif m_type == "note":
                     lines.append(f"[Long-Term Memory (note)]: {res.get('title')} - {res.get('content')}")
+            if results:
+                asyncio.create_task(self.track_access_and_learn(query, results))
             return "\n".join(lines)
         except Exception as e:
             logger.error(f"Error compiling Layer 3 long-term context: {e}", exc_info=True)
@@ -458,7 +464,7 @@ class MemoryService:
             # 1. Pronoun Resolution
             if settings.ENABLE_ALIAS_RESOLUTION and self.pronoun_resolver:
                 try:
-                    recent_convs = await self.sqlite_repo.list_conversations(session_id, limit=5)
+                    recent_convs = await self.sqlite_repo.get_recent_conversations(session_id, limit=5)
                     recent_msg_list = [{"role": c["role"], "content": c["content"]} for c in recent_convs]
                     referent = await self.pronoun_resolver.resolve_referent(text, recent_msg_list)
                     if referent:
@@ -502,4 +508,75 @@ class MemoryService:
                     
         except Exception as e:
             logger.error(f"Error in background graph/profile task: {e}", exc_info=True)
+
+    async def track_access_and_learn(self, query: str, retrieved_records: List[Dict[str, Any]]) -> None:
+        """
+        Calculates and applies adaptive importance updates to database records.
+        """
+        if not retrieved_records:
+            return
+            
+        try:
+            # 1. Update access statistics (pure access tracking)
+            type_id_pairs = []
+            for rec in retrieved_records:
+                m_type = rec.get("memory_type")
+                record_id = rec.get("record_id") or rec.get("id")
+                if m_type and record_id:
+                    type_id_pairs.append((m_type, record_id))
+            
+            if type_id_pairs:
+                await self.sqlite_repo.record_accesses(type_id_pairs)
+
+            # 2. Run Adaptive Importance score calculations
+            from memory.memory_factory import MemoryFactory
+            adaptive_learner = MemoryFactory.get_adaptive_learner()
+            
+            for rec in retrieved_records:
+                m_type = rec.get("memory_type")
+                record_id = rec.get("record_id") or rec.get("id")
+                similarity = rec.get("similarity", 0.7) # fallback default relevance
+                
+                if m_type and record_id and m_type in ("fact", "preference", "note", "goal", "task"):
+                    db_record = await self.sqlite_repo.get_record_by_id_and_type(m_type, record_id)
+                    if db_record:
+                        current_importance = db_record.get("importance", 50)
+                        access_count = db_record.get("access_count", 0)
+                        
+                        new_importance = adaptive_learner.compute_adaptive_score(
+                            current_importance=current_importance,
+                            access_count=access_count,
+                            relevance_score=similarity,
+                            user_query=query
+                        )
+                        
+                        if new_importance != current_importance:
+                            await self.sqlite_repo.update_importance(m_type, record_id, new_importance)
+        except Exception as e:
+            logger.error(f"Failed in track_access_and_learn task: {e}", exc_info=True)
+
+    async def set_active_status(self, m_type: str, record_id: int, is_active: bool) -> bool:
+        """
+        Toggles the active status of a memory record.
+        """
+        return await self.sqlite_repo.set_memory_active_status(m_type, record_id, is_active)
+
+    async def archive_memory(self, m_type: str, record_id: int, is_archived: bool = True) -> bool:
+        """
+        Toggles the archived status of a memory record.
+        """
+        return await self.sqlite_repo.set_memory_archived_status(m_type, record_id, is_archived)
+
+    async def delete_memory_permanently(self, m_type: str, record_id: int) -> bool:
+        """
+        Permanently deletes a memory record by removing it from the database.
+        """
+        # Also clean up from vector search if possible
+        if self.chroma_repo:
+            chroma_id = f"{m_type}_{record_id}"
+            try:
+                self.chroma_repo.delete_embedding(chroma_id)
+            except Exception as e:
+                logger.warning(f"Failed to delete ChromaDB index {chroma_id} during permanent delete: {e}")
+        return await self.sqlite_repo.delete_memory_permanently(m_type, record_id)
 

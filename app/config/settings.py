@@ -63,6 +63,10 @@ class Settings(BaseSettings):
     ENABLE_ALIAS_RESOLUTION: bool = True
     ENABLE_GRAPH_REASONING: bool = True
 
+    # Reconciled Phase 5 Compression Settings
+    COMPRESSION_THRESHOLD: int = 40
+    COMPRESSION_TARGET: int = 20
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

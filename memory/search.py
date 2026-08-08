@@ -184,7 +184,7 @@ class MemorySearchService:
                     
         return final_selections
 
-    async def search_relational_memories(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
+    async def search_relational_memories(self, query: str, limit: int = 5, session_id: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Layer 3: Long-Term Memory. Search SQLite directly for facts, preferences, goals, tasks, notes using keyword matches.
         """
@@ -211,7 +211,7 @@ class MemorySearchService:
             facts = await self.sqlite_repo.search_facts(kw, limit=limit, include_inactive=include_inactive, include_archived=include_archived)
             prefs = await self.sqlite_repo.search_preferences(kw, limit=limit, include_inactive=include_inactive, include_archived=include_archived)
             goals = await self.sqlite_repo.search_goals(kw, limit=limit)
-            tasks = await self.sqlite_repo.search_tasks(kw, limit=limit)
+            tasks = await self.sqlite_repo.search_tasks(session_id, kw, limit=limit)
             notes = await self.sqlite_repo.search_notes(kw, limit=limit)
             
             for item in facts:

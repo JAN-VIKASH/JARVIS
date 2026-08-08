@@ -3,7 +3,7 @@ SQLite implementation of the BaseMemoryRepository using SQLAlchemy async session
 """
 from typing import List, Dict, Any, Optional
 from datetime import datetime
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, func
 from app.database.session import get_async_session
 from app.database.models import (
     ConversationModel,
@@ -304,6 +304,7 @@ class SQLiteMemoryRepository(BaseMemoryRepository):
             if model:
                 model.content = content
                 model.importance = importance
+                model.version = (model.version or 1) + 1
                 model.updated_at = datetime.utcnow()
                 model.last_accessed_at = datetime.utcnow()
                 model.access_count = (model.access_count or 0) + 1
@@ -374,6 +375,7 @@ class SQLiteMemoryRepository(BaseMemoryRepository):
                 model.description = description
                 model.status = status
                 model.importance = importance
+                model.version = (model.version or 1) + 1
                 model.updated_at = datetime.utcnow()
                 model.last_accessed_at = datetime.utcnow()
                 model.access_count = (model.access_count or 0) + 1
@@ -595,16 +597,17 @@ class SQLiteMemoryRepository(BaseMemoryRepository):
             await session.flush()
             return True
 
-    async def search_tasks(self, session_id: str, query: str, limit: int = 10) -> List[Dict[str, Any]]:
+    async def search_tasks(self, session_id: Optional[str], query: str, limit: int = 10) -> List[Dict[str, Any]]:
         async with get_async_session() as session:
             query_lower = query.lower()
             include_inactive = any(w in query_lower for w in ["history", "previous", "version"])
             include_archived = any(w in query_lower for w in ["archive", "past", "historical"])
             
             stmt = select(TaskModel).where(
-                TaskModel.session_id == session_id,
                 TaskModel.is_deleted == False
             )
+            if session_id:
+                stmt = stmt.where(TaskModel.session_id == session_id)
             if not include_inactive:
                 stmt = stmt.where(TaskModel.is_active == True)
             if not include_archived:
@@ -871,4 +874,195 @@ class SQLiteMemoryRepository(BaseMemoryRepository):
                 result["key"] = m.title
                 result["value"] = m.content
             return result
+
+    async def record_accesses(self, type_id_pairs: List[tuple]) -> None:
+        """
+        Executes minimal, isolated updates on access metrics (access_count, last_accessed_at)
+        and potentially sets is_archived = False.
+        Does not apply any adaptive importance business rules directly.
+        """
+        async with get_async_session() as session:
+            for m_type, record_id in type_id_pairs:
+                model_class = None
+                if m_type == "fact":
+                    model_class = UserFactModel
+                elif m_type == "preference":
+                    model_class = PreferenceModel
+                elif m_type == "note":
+                    model_class = NoteModel
+                elif m_type == "goal":
+                    model_class = GoalModel
+                elif m_type == "task":
+                    model_class = TaskModel
+                
+                if model_class:
+                    stmt = select(model_class).where(model_class.id == record_id)
+                    res = await session.execute(stmt)
+                    model = res.scalars().first()
+                    if model:
+                        model.last_accessed_at = datetime.utcnow()
+                        model.access_count = (model.access_count or 0) + 1
+                        if getattr(model, "is_archived", False):
+                            model.is_archived = False
+            await session.flush()
+
+    async def update_importance(self, m_type: str, record_id: int, new_importance: int) -> bool:
+        """
+        Updates the importance score of a specific memory record.
+        """
+        async with get_async_session() as session:
+            model_class = None
+            if m_type == "fact":
+                model_class = UserFactModel
+            elif m_type == "preference":
+                model_class = PreferenceModel
+            elif m_type == "note":
+                model_class = NoteModel
+            elif m_type == "goal":
+                model_class = GoalModel
+            elif m_type == "task":
+                model_class = TaskModel
+            
+            if not model_class:
+                return False
+                
+            stmt = select(model_class).where(model_class.id == record_id)
+            res = await session.execute(stmt)
+            model = res.scalars().first()
+            if model:
+                model.importance = new_importance
+                model.updated_at = datetime.utcnow()
+                await session.flush()
+                return True
+            return False
+
+    async def set_memory_active_status(self, m_type: str, record_id: int, is_active: bool) -> bool:
+        """
+        Toggles the active status of a memory record.
+        """
+        async with get_async_session() as session:
+            model_class = None
+            if m_type == "fact":
+                model_class = UserFactModel
+            elif m_type == "preference":
+                model_class = PreferenceModel
+            elif m_type == "note":
+                model_class = NoteModel
+            elif m_type == "goal":
+                model_class = GoalModel
+            elif m_type == "task":
+                model_class = TaskModel
+            
+            if not model_class:
+                return False
+                
+            stmt = select(model_class).where(model_class.id == record_id)
+            res = await session.execute(stmt)
+            model = res.scalars().first()
+            if model:
+                model.is_active = is_active
+                model.updated_at = datetime.utcnow()
+                await session.flush()
+                return True
+            return False
+
+    async def set_memory_archived_status(self, m_type: str, record_id: int, is_archived: bool) -> bool:
+        """
+        Toggles the archived status of a memory record.
+        """
+        async with get_async_session() as session:
+            model_class = None
+            if m_type == "fact":
+                model_class = UserFactModel
+            elif m_type == "preference":
+                model_class = PreferenceModel
+            elif m_type == "note":
+                model_class = NoteModel
+            elif m_type == "goal":
+                model_class = GoalModel
+            elif m_type == "task":
+                model_class = TaskModel
+            
+            if not model_class:
+                return False
+                
+            stmt = select(model_class).where(model_class.id == record_id)
+            res = await session.execute(stmt)
+            model = res.scalars().first()
+            if model:
+                model.is_archived = is_archived
+                model.updated_at = datetime.utcnow()
+                await session.flush()
+                return True
+            return False
+
+    async def delete_memory_permanently(self, m_type: str, record_id: int) -> bool:
+        """
+        Permanently deletes a memory record by removing it from the database.
+        """
+        async with get_async_session() as session:
+            model_class = None
+            if m_type == "fact":
+                model_class = UserFactModel
+            elif m_type == "preference":
+                model_class = PreferenceModel
+            elif m_type == "note":
+                model_class = NoteModel
+            elif m_type == "goal":
+                model_class = GoalModel
+            elif m_type == "task":
+                model_class = TaskModel
+            
+            if not model_class:
+                return False
+                
+            stmt = select(model_class).where(model_class.id == record_id)
+            res = await session.execute(stmt)
+            model = res.scalars().first()
+            if model:
+                await session.delete(model)
+                await session.flush()
+                return True
+            return False
+
+    async def get_conversation_count(self, session_id: str) -> int:
+        """
+        Returns the total number of dialogue records in a session.
+        """
+        async with get_async_session() as session:
+            stmt = select(func.count(ConversationModel.id)).where(ConversationModel.session_id == session_id)
+            res = await session.execute(stmt)
+            return res.scalar() or 0
+
+    async def get_oldest_conversations(self, session_id: str, limit: int) -> List[Dict[str, Any]]:
+        """
+        Retrieves the oldest dialogue records in a session.
+        """
+        async with get_async_session() as session:
+            stmt = select(ConversationModel).where(
+                ConversationModel.session_id == session_id
+            ).order_by(ConversationModel.timestamp.asc()).limit(limit)
+            result = await session.execute(stmt)
+            models = result.scalars().all()
+            return [
+                {
+                    "id": m.id,
+                    "session_id": m.session_id,
+                    "role": m.role,
+                    "content": m.content,
+                    "timestamp": m.timestamp
+                }
+                for m in models
+            ]
+
+    async def delete_conversations_by_ids(self, ids: List[int]) -> bool:
+        """
+        Deletes dialogue records by their IDs.
+        """
+        if not ids:
+            return False
+        async with get_async_session() as session:
+            stmt = delete(ConversationModel).where(ConversationModel.id.in_(ids))
+            result = await session.execute(stmt)
+            return (result.rowcount or 0) > 0
 

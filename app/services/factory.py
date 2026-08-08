@@ -106,7 +106,8 @@ class ServiceFactory:
                 llm=ServiceFactory.get_llm(),
                 cognitive_reasoner=ServiceFactory.get_cognitive_reasoner(),
                 desktop_service=ServiceFactory.get_desktop_automation_service(),
-                browser_service=ServiceFactory.get_browser_automation_service()
+                browser_service=ServiceFactory.get_browser_automation_service(),
+                vision_service=ServiceFactory.get_vision_service()
             )
         return ServiceFactory._agent_service
 
@@ -121,4 +122,16 @@ class ServiceFactory:
             from app.services.browser_automation_service import BrowserAutomationService
             ServiceFactory._browser_automation_service = BrowserAutomationService()
         return ServiceFactory._browser_automation_service
+
+    _vision_service = None
+
+    @staticmethod
+    def get_vision_service():
+        """
+        Resolves and returns the active VisionService instance (singleton).
+        """
+        if ServiceFactory._vision_service is None:
+            from app.services.vision_service import VisionService
+            ServiceFactory._vision_service = VisionService()
+        return ServiceFactory._vision_service
 

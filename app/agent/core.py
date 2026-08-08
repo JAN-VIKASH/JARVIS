@@ -21,11 +21,13 @@ class AgentService:
     Manages plan generation, execution loops, and paused confirmation states.
     """
     def __init__(self, llm: BaseLLM, cognitive_reasoner: CognitiveReasoner, 
-                 desktop_service: DesktopAutomationService, browser_service: Optional[Any] = None):
+                 desktop_service: DesktopAutomationService, browser_service: Optional[Any] = None,
+                 vision_service: Optional[Any] = None):
         self.planner = PlanningEngine(llm, cognitive_reasoner)
-        self.executor = ExecutionEngine(desktop_service, browser_service)
+        self.executor = ExecutionEngine(desktop_service, browser_service, vision_service)
         self.desktop_service = desktop_service
         self.browser_service = browser_service
+        self.vision_service = vision_service
         self.active_plans: Dict[str, AgentPlan] = {}
         self.total_timeout = 60.0
 

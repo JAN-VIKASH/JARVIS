@@ -75,7 +75,7 @@ class ChatService(BaseChatService):
         classification_latency = time.perf_counter() - classification_start
         
         # Intercept new complex goal agent runs
-        if intent == "complex_goal":
+        if intent in ("complex_goal", "vision_action"):
             result = await agent_service.execute_goal(request.message, session_id)
             await self.memory.add_message(session_id, "user", request.message)
             await self.memory.add_message(session_id, "assistant", result)

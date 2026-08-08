@@ -251,9 +251,44 @@ BROWSER_TOOL_SCHEMAS = [
     }
 ]
 
+VISION_TOOL_SCHEMAS = [
+    {
+        "name": "take_screenshot",
+        "description": "Captures a screenshot of the main monitor screen and saves it temporarily.",
+        "parameters": {"type": "object", "properties": {}}
+    },
+    {
+        "name": "read_screen",
+        "description": "Performs local OCR on the screen screenshot to extract all text strings and bounding boxes.",
+        "parameters": {"type": "object", "properties": {}}
+    },
+    {
+        "name": "find_screen_element",
+        "description": "Locates elements matching target text on the screen and returns their pixel coordinates.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "text": {"type": "string", "description": "The text to search for on screen."}
+            },
+            "required": ["text"]
+        }
+    },
+    {
+        "name": "describe_screen",
+        "description": "Describes visual content or answers screen queries using optional VLM context.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "prompt": {"type": "string", "description": "Question or instruction about the screen visual state."}
+            },
+            "required": ["prompt"]
+        }
+    }
+]
+
 
 def get_tool_schemas() -> List[Dict[str, Any]]:
-    return DESKTOP_TOOL_SCHEMAS + BROWSER_TOOL_SCHEMAS
+    return DESKTOP_TOOL_SCHEMAS + BROWSER_TOOL_SCHEMAS + VISION_TOOL_SCHEMAS
 
 
 def get_tool_prompt() -> str:

@@ -119,6 +119,14 @@ class IntentClassifier:
         if any(re.search(p, q_lower) for p in browser_patterns):
             return "browser_action"
 
+        # Vision Action Classification (Phase 9)
+        vision_patterns = [
+            r"\b(describe|what\s+is\s+on|see|read|find|look\s+at)\s+(the\s+)?(screen|monitor|display)\b",
+            r"\b(ocr\s+screen|screen\s+text)\b"
+        ]
+        if any(re.search(p, q_lower) for p in vision_patterns):
+            return "vision_action"
+
         # Desktop Action Classification (Phase 6)
         desktop_patterns = [
             r"\b(open|launch)\s+(the\s+)?(notepad|chrome|vscode|explorer)\b",

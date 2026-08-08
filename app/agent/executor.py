@@ -11,7 +11,7 @@ from app.agent.registry import ToolSelector
 from app.agent.reflection import ReflectionEngine
 from app.agent.recovery import RecoveryEngine
 from app.services.desktop_automation_service import DesktopAutomationService
-from tools.registry import BROWSER_TOOL_SCHEMAS
+from tools.registry import BROWSER_TOOL_SCHEMAS, VISION_TOOL_SCHEMAS
 
 logger = logging.getLogger("jarvis.agent.executor")
 
@@ -20,9 +20,10 @@ class ExecutionEngine:
     Executes an AgentPlan step-by-step, enforcing safety checks, prerequisites, 
     verification reflection, and recovery paths.
     """
-    def __init__(self, desktop_service: DesktopAutomationService, browser_service: Any = None):
+    def __init__(self, desktop_service: DesktopAutomationService, browser_service: Any = None, vision_service: Any = None):
         self.desktop_service = desktop_service
         self.browser_service = browser_service
+        self.vision_service = vision_service
         self.tool_selector = ToolSelector()
         self.reflection_engine = ReflectionEngine(desktop_service.desktop_tool, browser_service)
         self.recovery_engine = RecoveryEngine(max_retries=3)
@@ -77,7 +78,10 @@ class ExecutionEngine:
 
             # 5. Safety Tier Check
             is_browser_tool = step.selected_tool in [b["name"] for b in BROWSER_TOOL_SCHEMAS]
-            if is_browser_tool and self.browser_service:
+            is_vision_tool = step.selected_tool in [v["name"] for v in VISION_TOOL_SCHEMAS]
+            if is_vision_tool:
+                tier = "SAFE"
+            elif is_browser_tool and self.browser_service:
                 tier = self.browser_service._classify_safety_tier(step.selected_tool, step.parameters)
             else:
                 tier = self.desktop_service._classify_safety_tier(step.selected_tool, step.parameters)
@@ -160,7 +164,31 @@ class ExecutionEngine:
                 # Step timeout constraint (15.0s)
                 async with asyncio.timeout(self.step_timeout):
                     is_browser_tool = step.selected_tool in [b["name"] for b in BROWSER_TOOL_SCHEMAS]
-                    if is_browser_tool and self.browser_service:
+                    is_vision_tool = step.selected_tool in [v["name"] for v in VISION_TOOL_SCHEMAS]
+                    
+                    if is_vision_tool and self.vision_service:
+                        import json
+                        if step.selected_tool == "take_screenshot":
+                            path = await self.vision_service.capture_screen(session_id)
+                            result_str = f"Screenshot captured successfully to {path}"
+                        elif step.selected_tool == "read_screen":
+                            path = await self.vision_service.capture_screen(session_id)
+                            try:
+                                ocr_res = await self.vision_service.perform_ocr(path)
+                                result_str = json.dumps(ocr_res)
+                            finally:
+                                self.vision_service.clean_screenshot(path)
+                        elif step.selected_tool == "find_screen_element":
+                            txt = step.parameters.get("text", "")
+                            res = await self.vision_service.find_element_coordinates(session_id, txt)
+                            result_str = json.dumps(res)
+                        elif step.selected_tool == "describe_screen":
+                            prompt = step.parameters.get("prompt", "")
+                            res = await self.vision_service.describe_screen(session_id, prompt)
+                            result_str = json.dumps(res)
+                        else:
+                            result_str = "Unsupported vision tool."
+                    elif is_browser_tool and self.browser_service:
                         result_str = await self.browser_service._run_browser_action(session_id, step.selected_tool, step.parameters)
                     else:
                         result_str = await self.desktop_service._run_tool_command(step.selected_tool, step.parameters)

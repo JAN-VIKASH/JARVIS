@@ -148,13 +148,20 @@
 
 ---
 
+### ✅ Phase 9: Vision (v0.9)
+* **Goal**: Capture screenshots, run local OCR text queries, and query visual context locally via VLM.
+* **Features**:
+  * Pluggable local OCR subsystem utilizing Tesseract OCR with automatic fallback to `MockOCREngine` if system binary is missing.
+  * Completely optional, lazy-loaded local VLM using quantized Florence-2 ONNX model CPU session.
+  * Controlled `MODEL_UNAVAILABLE` behavior if local VLM model assets are absent (no implicit downloads).
+  * Strict screenshot privacy: transient image files created locally in workspace, purged within `finally` blocks, and never sent to cloud APIs.
+  * Decoupled coordinates output: VisionService calculates bounding coordinates; DesktopAutomationService remains the sole input executor.
+
+---
+
 ## Future Roadmap
 
-### ⚡ Next Phase 9: Vision (v0.9) [PLANNED]
-* **Goal**: OCR and image interpretation.
-* **Details**: Local image processing pipelines via ONNX models to analyze screen snapshots.
-
-### Phase 10: Wake Word (v1.0) [PLANNED]
+### ⚡ Next Phase 10: Wake Word (v1.0) [PLANNED]
 * **Goal**: Continuously listening hotword service.
 * **Details**: Add background thread audio processing to capture wake trigger phrase ("Hey Jarvis") using local, lightweight engine.
 

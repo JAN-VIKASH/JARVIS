@@ -1,0 +1,5 @@
+Voice mode optimizations:
+- Prefer shorter, conversational sentences.
+- Reduce honorific repetition.
+- Avoid verbose acknowledgements.
+- Optimize responses for spoken conversation rather than written text.

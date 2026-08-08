@@ -52,7 +52,7 @@ JARVIS has a robust cognitive core, fully equipped with the following production
 JARVIS is built upon a strict, unidirectional layered architecture. Data and method calls flow downward:
 
 ```text
-Presentation Layer: PTT CLI Console / Web Interface
+Presentation Layer: PTT CLI Console (Desktop GUI is Planned - Phase 10)
        ↓
 API Layer: FastAPI Router Endpoints (chat, health)
        ↓

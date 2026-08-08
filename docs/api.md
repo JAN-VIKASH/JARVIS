@@ -75,36 +75,36 @@ These are the primary public programmatic interfaces used within the JARVIS code
 * **Purpose**: Coordinates persistent entity graph operations and cache metrics.
 * **Execution Flow**: Invokes `EntityRepository` and `RelationshipRepository` within transactional scopes, updating ChromaDB embeddings and invalidating LRU cache keys.
 * **Public Methods**:
-  * `add_entity(canonical_name: str, entity_type: str, description: str = "") -> Dict[str, Any]`:
+  * `async add_entity(name: str, entity_type: str, description: Optional[str] = None, confidence: float = 1.0, metadata_json: Optional[str] = None) -> Dict[str, Any]`:
     * *Validation*: Enforces normalization of names to trimmed lowercase strings.
-  * `add_relationship(source_name: str, source_type: str, target_name: str, target_type: str, relation_type: str, confidence: float = 1.0, weight: float = 1.0) -> Dict[str, Any]`:
+  * `async add_relationship(source_name: str, source_type: str, target_name: str, target_type: str, relation_type: str, confidence: float = 1.0, weight: float = 1.0, bidirectional: bool = False, evidence_memory_id: Optional[str] = None, source_session_id: Optional[str] = None) -> Dict[str, Any]`:
     * *Execution Flow*: Resolves/creates source and target entity IDs, checks overlap, and writes to `RelationshipModel`.
-  * `delete_entity_safely(entity_id: str) -> bool`:
+  * `async delete_entity_safely(entity_id: str) -> bool`:
     * *Execution Flow*: Rewires related edges and deletes entity records, clearing cached lookups.
-  * `expand_context(seed_entities: List[str], max_depth: int = 2) -> List[str]`:
+  * `async expand_context(entities_list: List[str], max_depth: int = 2) -> List[str]`:
     * *Execution Flow*: Traverses edges recursively up to depth limit (max 3), avoiding loops, and returns fact sentences.
-  * `query(entity_name: Optional[str] = None, relation_type: Optional[str] = None, depth: int = 1) -> List[Dict[str, Any]]`
+  * `async query(entity: str, relation: Optional[str] = None, depth: int = 1) -> List[Dict[str, Any]]`
 
 ### 2. `UserProfileEngine`
 * **Purpose**: Maintains session preferences.
 * **Public Methods**:
-  * `get_profile_context(session_id: str) -> Dict[str, Any]`
-  * `update_profile_key(session_id: str, key: str, operation: str, value: str, confidence: float = 1.0) -> Dict[str, Any]`:
+  * `async get_profile_context(session_id: str) -> Dict[str, Any]`
+  * `async update_profile_key(session_id: str, key: str, operation: str, value: Any, confidence: float = 1.0, source: str = "llm", source_memory_id: Optional[str] = None) -> Dict[str, Any]`:
     * *Execution Flow*: Modifies values (add/remove lists or set strings) and updates SQLite profiles.
 
 ### 3. `TimelineEngine`
 * **Purpose**: Renders timeline calendar views.
 * **Public Methods**:
-  * `generate_timeline(session_id: str, view: str = "upcoming", start_date: Optional[datetime] = None) -> List[Dict[str, Any]]`:
+  * `async generate_timeline(session_id: str, view: str = "daily", start_date: Optional[datetime] = None, sort_by: str = "start_time") -> List[Dict[str, Any]]`:
     * *Execution Flow*: Queries `EventRepository` based on date parameters, formats text, and returns event dicts.
 
 ### 4. `GraphExporter` & `GraphImporter`
 * **Purpose**: Exports and restores graph nodes.
 * **Public Methods**:
-  * `GraphExporter.export_to_json() -> str`
-  * `GraphExporter.export_to_dot() -> str`
-  * `GraphExporter.export_to_graphml() -> str`
-  * `GraphImporter.import_from_json(json_str: str) -> Dict[str, int]`
+  * `async GraphExporter.export_to_json() -> str`
+  * `async GraphExporter.export_to_dot() -> str`
+  * `async GraphExporter.export_to_graphml() -> str`
+  * `async GraphImporter.import_from_json(json_data: str) -> Dict[str, int]`
 
 ---
 
@@ -141,5 +141,3 @@ These are the primary public programmatic interfaces used within the JARVIS code
   "error_type": "InternalServerError"
 }
 ```
-
-

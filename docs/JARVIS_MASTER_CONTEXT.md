@@ -1,15 +1,16 @@
 # JARVIS Master Context - Developer Handbook
 
-* **Last Updated**: 2026-08-07
-* **Current Phase**: Phase 5.3
-* **Status**: Current
+* **Last Updated**: 2026-08-08
+* **Latest Completed Phase**: Phase 5.2 (Knowledge Graph, User Profiles & Relational Memory)
+* **Next Phase**: Phase 5.3 (User Preferences, Habits & Tasks) [PLANNED]
+* **Status**: Freeze
 * **Version**: v0.5.2
 
 ---
 
 ## 1. Project Vision & Core Mandate
 
-The mission of JARVIS is to establish a production-grade, local-first, low-latency personal AI assistant inspired by Tony Stark's hologram console helper. The system is designed to operate completely offline for voice interactions (STT/TTS) and metadata extraction, leveraging vector search (ChromaDB) and relational databases (SQLite/PostgreSQL) inside clean Repository and dependency injection boundaries.
+The mission of JARVIS is to establish a production-grade, local-first, low-latency personal AI assistant inspired by Tony Stark's hologram console helper. The system is designed to operate completely offline for voice interactions (STT/TTS) and metadata extraction, leveraging vector search (ChromaDB) and relational databases (SQLite) inside clean Repository and dependency injection boundaries.
 
 ---
 
@@ -79,7 +80,7 @@ The application initializes its services in the following order:
 
 Here is why core architectural choices were made:
 
-* **Why Repository Pattern?** By abstracting direct SQL logic into Repository boundaries, the codebase is fully database-independent. JARVIS runs on SQLite locally, but can migrate to PostgreSQL by creating a new repository implementation without altering service logic.
+* **Why Repository Pattern?** By abstracting direct SQL logic into Repository boundaries, the codebase is fully database-independent. JARVIS runs on SQLite locally, keeping installation simple.
 * **Why Dependency Injection?** Constructor-based DI decouples class orchestration from instance configuration. In unit tests, expensive modules (LLM calls, databases, STT/TTS) are easily mocked by passing placeholder instances to constructors.
 * **Why Service Factories?** Centralizes constructor call parameters, enforcing singleton lifetimes and resolving dependencies in a single registry module.
 * **Why ChromaDB?** Local, file-persistent vector storage that runs offline, allowing JARVIS to run semantic similarity searches on past dialogue logs and timeline events without introducing subscription costs or internet latency.
@@ -110,7 +111,7 @@ If discrepancies or contradictions occur across documentation files, resolve the
 
 ### AI Assistant Contribution Guide
 * **Review Mandate**: Before proposing any change, AI assistants must retrieve and review `Roadmap -> Master Context -> Architecture -> Current Phase -> Coding Guidelines -> Implementations` in that exact order.
-* **No Speculations**: Never document planned features as completed. Mark any unimplemented proposals as `Planned` or `Experimental`.
+* **No Speculations**: Never document planned features as completed. Mark any unimplemented proposals as `Planned` or `Next`.
 * **Zero Code Modification in Documentation Steps**: During documentation freezes or synchronization tasks, do not modify source files or create new markdown documents.
 
 ---
@@ -139,14 +140,13 @@ The following interfaces describe the implemented architecture and must remain b
 ## 9. Documentation Maintenance Policy
 
 Whenever implementation changes occur, the following documents must be updated where applicable to ensure ongoing accuracy:
-* [roadmap.md](file:///d:/JARVIS/docs/roadmap.md)
-* [architecture.md](file:///d:/JARVIS/docs/architecture.md)
-* [folder_structure.md](file:///d:/JARVIS/docs/folder_structure.md)
-* [api.md](file:///d:/JARVIS/docs/api.md)
-* [coding_guidelines.md](file:///d:/JARVIS/docs/coding_guidelines.md)
-* [JARVIS_MASTER_CONTEXT.md](file:///d:/JARVIS/docs/JARVIS_MASTER_CONTEXT.md)
+* [roadmap.md](roadmap.md)
+* [architecture.md](architecture.md)
+* [folder_structure.md](folder_structure.md)
+* [api.md](api.md)
+* [coding_guidelines.md](coding_guidelines.md)
+* [JARVIS_MASTER_CONTEXT.md](JARVIS_MASTER_CONTEXT.md)
 * Architectural Diagrams under `docs/diagrams/`
 * Corresponding Phase logs under `docs/phases/`
 
 Documentation upgrades are considered an essential component of feature completion. No feature is considered complete until both implementation code and documentation files have been fully synchronized.
-

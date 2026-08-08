@@ -1,8 +1,9 @@
 # JARVIS Roadmap
 
-* **Last Updated**: 2026-08-07
-* **Current Phase**: Phase 5.3
-* **Status**: Current
+* **Last Updated**: 2026-08-08
+* **Latest Completed Phase**: Phase 5.2 (Knowledge Graph, User Profiles & Relational Memory)
+* **Next Phase**: Phase 5.3 (User Preferences, Habits & Tasks)
+* **Status**: Freeze
 * **Version**: v0.5.2
 
 ---
@@ -11,9 +12,9 @@
 
 ```text
 [✅ Phase 1: Foundation] ──> [✅ Phase 2: Groq LLM] ──> [✅ Phase 3: Voice PTT]
-                                                               │
-                                                               v
-[Planned Phase 6: Desktop] <── [⚡ Current Phase 5.3] <── [✅ Phase 5.2: Relational Graph] <── [✅ Phase 5.1.1: Event Lifecycle] <── [✅ Phase 5.1: Event Engine] <── [✅ Phase 4: Long Memory]
+                                                                │
+                                                                v
+[Planned Phase 6: Desktop] <── [⚡ Next Phase 5.3] <── [✅ Phase 5.2: Relational Graph] <── [✅ Phase 5.1.1: Event Lifecycle] <── [✅ Phase 5.1: Event Engine] <── [✅ Phase 4: Long Memory]
 ```
 
 ---
@@ -98,32 +99,32 @@
 
 ## Future Roadmap
 
-### ⚡ Current Phase 5.3: User Preferences, Habits & Tasks (v0.5.3)
-* **Goal**: Extract long-term user habits, schedules, recurring preferences, and structured task todo lists.
+### ⚡ Next Phase 5.3: User Preferences, Habits & Tasks (v0.5.3) [PLANNED]
+* **Goal**: Extract long-term user habits, routines, recurring schedules, and manage structured task lists.
 
-### Phase 6: Desktop Automation (v0.6)
+### Phase 6: Desktop Automation (v0.6) [PLANNED]
 * **Goal**: OS desktop navigation.
 * **Details**: Run GUI-level operations, control mouse, keyboard, and automate administrative tasks.
 
-### Phase 7: Browser Automation (v0.7)
+### Phase 7: Browser Automation (v0.7) [PLANNED]
 * **Goal**: Browser scraping and UI interactions.
 * **Details**: Integrate Playwright to navigate websites, complete checkouts, and pull dynamic HTML assets.
 
-### Phase 8: Vision (v0.8)
+### Phase 8: Vision (v0.8) [PLANNED]
 * **Goal**: OCR and image interpretation.
 * **Details**: Local image processing pipelines via ONNX models to analyze screen snapshots.
 
-### Phase 9: Wake Word (v0.9)
+### Phase 9: Wake Word (v0.9) [PLANNED]
 * **Goal**: Continuously listening hotword service.
 * **Details**: Add background thread audio processing to capture wake trigger phrase ("Hey Jarvis") using local, lightweight engine.
 
-### Phase 10: Desktop Graphical User Interface (v1.0)
+### Phase 10: Desktop Graphical User Interface (v1.0) [PLANNED]
 * **Goal**: Stunning visual HUD.
-* **Details**: Create clean desktop panel (using electron or modern frontend framework) showing agent status and chat records.
+* **Details**: Create clean desktop panel (using electron or Tauri) showing agent status and chat records.
 
-### Phase 11: Multi-Agent System (v1.1)
+### Phase 11: Multi-Agent System (v1.1) [PLANNED]
 * **Goal**: Task division among subagents.
 * **Details**: Orchestrate specialized subagents to tackle complex workflows parallelly.
 
-### Phase 12: Cloud Sync (v1.2)
+### Phase 12: Cloud Sync (v1.2) [PLANNED]
 * **Goal**: Secured database and state synchronization across multiple user machines.

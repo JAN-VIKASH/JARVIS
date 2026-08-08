@@ -1,8 +1,8 @@
 # Architecture Layers Diagram
 
-* **Last Updated**: 2026-08-07
-* **Current Phase**: Phase 5.3
-* **Status**: Current
+* **Last Updated**: 2026-08-08
+* **Current Phase**: Phase 5.3 (Planned / Next)
+* **Status**: Freeze
 * **Version**: v0.5.2
 
 ---
@@ -12,12 +12,12 @@ graph TD
     %% Presentation Layer
     subgraph Presentation Layer
         CLI[PTT CLI Console]
-        GUI[Desktop GUI]
+        %% GUI[Desktop GUI HUD - Planned Phase 10]
     end
 
     %% API Layer
     subgraph API Layer
-        REST[FastAPI api/v1/chat.py]
+        REST[FastAPI chat router - chat.py]
     end
 
     %% Service Layer
@@ -46,7 +46,7 @@ graph TD
 
     %% Repositories / Storage
     subgraph Storage / DB Layer
-        SQL[SQLite / PostgreSQL]
+        SQL[SQLite Database]
         Chroma[ChromaDB Vector Indexes]
     end
 
@@ -58,7 +58,6 @@ graph TD
 
     %% Connections
     CLI --> VS
-    GUI --> REST
     REST --> CS
     
     Factory -->|Resolves| CS
@@ -84,3 +83,6 @@ graph TD
     TTS -->|Plays| Spk
 ```
 
+> [!NOTE]
+> **Planned GUI Integration (Phase 10)**:
+> A Desktop Graphical User Interface (HUD) is planned for Phase 10. It will connect to the API Layer (`REST`) but is not part of the active Phase 5.2 execution path.

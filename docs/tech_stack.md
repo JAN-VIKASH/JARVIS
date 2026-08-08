@@ -1,31 +1,34 @@
 # JARVIS Technology Stack
 
-* **Last Updated**: 2026-08-07
-* **Current Phase**: Phase 5.3
-* **Status**: Current
+* **Last Updated**: 2026-08-08
+* **Latest Completed Phase**: Phase 5.2 (Knowledge Graph, User Profiles & Relational Memory)
+* **Next Phase**: Phase 5.3 (User Preferences, Habits & Tasks) [PLANNED]
+* **Status**: Freeze
 * **Version**: v0.5.2
 
 ---
 
 ## 1. Current Production Stack
 
-These technologies are fully integrated and actively deployed in the current frozen Phase 5.2 release.
+These technologies are fully integrated and actively deployed in the current Phase 5.2 release.
 
 ### Backend Core
 * **Language**: Python 3.11 / 3.12 (asynchronous asyncio loop, type-hinted).
 * **API Framework**: FastAPI (>=0.110.0) - High-performance async REST controller routers.
 * **Server Wrapper**: Uvicorn[standard] (>=0.28.0) - ASGI server wrapper.
 * **Settings & Config**: Pydantic Settings (>=2.2.0) - Validation schemas parsing env parameters.
+* **Environment Variables**: python-dotenv (>=1.0.1) - Reads variables from `.env`.
+* **Async Library**: anyio (>=4.3.0) - Asynchronous execution support.
 
 ### Relational Database & ORM
-* **Database Engine**: SQLite (for local embedded runtime) & PostgreSQL (for production/cloud scale deployment setups).
+* **Database Engine**: SQLite (local process-bound file database).
 * **ORM Layer**: SQLAlchemy 2.0 (asyncio mappings, transactional boundaries, pooled sessions).
-* **Migration Manager**: Alembic (tracks schema changes across phases).
+* **Async DB Driver**: aiosqlite (>=0.19.0) - Asynchronous SQLite driver support.
 
 > [!NOTE]
 > **Architectural Decision Record: SQLite for Local Persistence**
 > * **Context**: JARVIS requires persistent memory indexing across reboot cycles that functions offline with zero infrastructure setup.
-> * **Decision**: Adopt SQLite. As an embedded process-bound file database, it adds zero runtime dependencies or daemon setup overhead, keeping local installations trivial. By accessing SQLite through SQLAlchemy 2.0 Async ORM repository boundaries, we guarantee 100% PostgreSQL schema compatibility if the user scales to a cloud deployment.
+> * **Decision**: Adopt SQLite. As an embedded process-bound file database, it adds zero runtime dependencies or daemon setup overhead, keeping local installations trivial. By accessing SQLite through SQLAlchemy 2.0 Async ORM repository boundaries, we guarantee PostgreSQL schema compatibility if the user scales to a cloud deployment.
 
 ### Vector Search & Embeddings
 * **Vector DB**: ChromaDB (PersistentClient local client wrapper storing semantic context and event vectors).
@@ -47,13 +50,7 @@ These technologies are fully integrated and actively deployed in the current fro
 
 ---
 
-## 2. Experimental Stack
-
-* *None*. All libraries in active directories have been verified and integrated into the core production stack.
-
----
-
-## 3. Future Planned Stack
+## 2. Future Planned Stack
 
 These libraries are slated for integration in upcoming phases.
 
@@ -67,5 +64,3 @@ These libraries are slated for integration in upcoming phases.
 ### Graphical User Interface (Phase 10)
 * **App Shell**: Tauri / Electron - Desktop HUD frame container.
 * **Frontend Web**: React / TailwindCSS (vibrant palettes, responsive layout interface elements).
-
-

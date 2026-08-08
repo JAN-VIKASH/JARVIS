@@ -1,21 +1,21 @@
 # Conversational Memory Flow Diagram
 
-* **Last Updated**: 2026-08-07
-* **Current Phase**: Phase 5.3
-* **Status**: Current
+* **Last Updated**: 2026-08-08
+* **Current Phase**: Phase 5.3 (Planned / Next)
+* **Status**: Freeze
 * **Version**: v0.5.2
 
 ---
 
 ```mermaid
 graph TD
-    A[ChatRequest: message] --> B[Resolve Pronoun Referents]
-    B --> C[Query Hierarchical Contexts]
+    A[ChatRequest: message] --> B[Resolve Pronoun Referents via PronounResolver]
+    B --> C[Query Hierarchical Contexts via MemoryService]
     
     subgraph Context Retrievals
         C1[UserProfileEngine: get_profile_context]
-        C2[SQLiteRepo: retrieve_long_term_context]
-        C3[ChromaRepo: retrieve_semantic_context]
+        C2[MemoryService: retrieve_long_term_context]
+        C3[MemoryService: retrieve_semantic_context]
         C4[KnowledgeGraphService: expand_context]
         C5[TimelineEngine: generate_timeline]
     end
@@ -27,18 +27,24 @@ graph TD
     C --> C5
     
     C1 & C2 & C3 & C4 & C5 --> D[ContextBuilder: Token Budgeting]
-    D --> E[Submit combined prompt list to LLM]
+    D --> E[Submit combined system prompt & history to LLM]
     E --> F[Receive LLM Result response]
     
-    F --> G[Save User/Assistant logs to SQLite]
-    G --> H[BackgroundJobManager: Enqueue Extraction Jobs]
+    F --> G[Save User/Assistant logs to sliding Session History]
+    G --> H[Trigger Async Background Save Tasks]
     
-    subgraph Async Background Tasks
-        H1[Extract Graph entities & relationship edges]
-        H2[Evolve Profile preferences lists]
-        H3[Index Vector Embeddings in ChromaDB]
+    subgraph Async Database Save & Indexing
+        H1[save_exchange: Write logs to SQLite database]
+        H2[save_exchange: Compute embeddings & index in ChromaDB]
     end
     
-    H --> H1 & H2 & H3
+    subgraph Async Cognitive Extraction via BackgroundJobManager
+        H3[Extract Graph entities & relationship edges to SQLite KG]
+        H4[Evolve Profile preferences lists in SQLite Profiles]
+    end
+    
+    H --> H1
+    H1 -->|Pending Index Status| H2
+    H --> H3
+    H --> H4
 ```
-

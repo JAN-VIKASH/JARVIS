@@ -1,8 +1,8 @@
 # JARVIS Architecture Details
 
-* **Last Updated**: 2026-08-07
-* **Current Phase**: Phase 5.3
-* **Status**: Current
+* **Last Updated**: 2026-08-08
+* **Current Phase**: Phase 5.3 (Planned / Next)
+* **Status**: Freeze
 * **Version**: v0.5.2
 
 ---
@@ -13,7 +13,8 @@ JARVIS is built upon a strict, unidirectional layered architecture. Data and cal
 
 ```text
   +-------------------------------------------------------------+
-  | Presentation Layer: PTT CLI Console / Web Interface         |
+  | Presentation Layer: PTT CLI Console                         |
+  | (Desktop HUD GUI is Planned - Phase 10)                     |
   +------------------------------┬------------------------------+
                                  │
                                  v
@@ -49,13 +50,13 @@ JARVIS is built upon a strict, unidirectional layered architecture. Data and cal
 
 ### Allowed Dependency Directions
 * **Presentation Layer** can depend on **Service Layer** and **API Layer**.
-* **API Layer** can depend **only** on **Service Layer** abstractions (BaseChatService).
+* **API Layer** can depend **only** on **Service Layer** abstractions (`BaseChatService`).
 * **Service Layer** depends on **Cognitive Layer** engines, **LLM Layer** providers, and **Memory Layer** repositories.
 * **Cognitive Layer** depends on **Memory/Repository Layer** and **Infrastructure Layer**.
 * **Repository Layer** depends on **Storage Layer** data structures (SQLAlchemy Models, Chroma Client).
 
 ### Forbidden Dependency Mappings ❌
-* **No Database/SQL leaking**: Service Layer and API Layer must never import `get_async_session`, SQLAlchemy models, or ChromaDB dependencies. All database calls must be brokered by repositories.
+* **No Database/SQL leaking**: Service Layer and API Layer must never import SQLAlchemy models or ChromaDB dependencies. All database calls must be brokered by repositories.
 * **No upward callbacks**: Repositories can never import services or routers.
 * **No direct Presentation-to-DB calls**: The Presentation layer (e.g. `VoiceController`) cannot query repositories directly.
 
@@ -66,12 +67,13 @@ JARVIS is built upon a strict, unidirectional layered architecture. Data and cal
 ### Layer 1: Presentation Layer
 * **Why it exists**: Provides an interactive interface for human operations.
 * **Responsibilities**: Captures user microphone buffers, detects push-to-talk keystrokes, and outputs synthesized audio.
-* **Ownership**: CLI console controllers.
+* **Ownership**: CLI console controllers (`voice_controller.py`).
 * **Dependencies**: `VoiceService`, `ChatRequest`, `BaseChatService`.
 * **Communication Rules**: Invokes VoiceService methods synchronously on user input actions.
+* *Note: A desktop graphical GUI HUD is planned for Phase 10 but is not currently implemented.*
 
 ### Layer 2: API Layer
-* **Why it exists**: Exposes REST interfaces for external clients or desktop GUI containers.
+* **Why it exists**: Exposes REST interfaces for external clients.
 * **Responsibilities**: Input validation schema assertions, correlation ID mappings, and request timing telemetry.
 * **Ownership**: FastAPI API routers (`app/api/v1/`).
 * **Dependencies**: Pydantic schemas, `BaseChatService`, `ServiceFactory`.
@@ -94,7 +96,7 @@ JARVIS is built upon a strict, unidirectional layered architecture. Data and cal
 ### Layer 5: Memory / Repository Layer
 * **Why it exists**: Decouples business rules from physical database drivers.
 * **Responsibilities**: Translates domain operations into database transactions (SQL queries, Chroma mappings).
-* **Ownership**: Repositories (`app/database/repositories/`).
+* **Ownership**: Repositories (`app/database/repositories/` & `memory/`).
 * **Dependencies**: SQLAlchemy async sessions, models.
 * **Communication Rules**: Enforces atomicity, rolls back database transactions on SQL failures, and runs refresh procedures.
 
@@ -146,5 +148,3 @@ JARVIS is built upon a strict, unidirectional layered architecture. Data and cal
 > **ADR 7: Layered Context Retrieval**
 > * **Context**: Prioritizing context insertion is essential for LLM focus.
 > * **Decision**: Enforce a 4-layer memory context retrieval sequence: Layer 1 (Current Input) -> Layer 2 (Sliding History turns) -> Layer 3 (SQL Relational Profile data) -> Layer 4 (Vector Semantic database exchanges).
-
-

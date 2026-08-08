@@ -1,8 +1,8 @@
 # JARVIS Folder Structure
 
-* **Last Updated**: 2026-08-07
-* **Current Phase**: Phase 5.3
-* **Status**: Current
+* **Last Updated**: 2026-08-08
+* **Current Phase**: Phase 5.3 (Planned / Next)
+* **Status**: Freeze
 * **Version**: v0.5.2
 
 ---
@@ -12,76 +12,177 @@
 The directory layout of the JARVIS repository is configured as follows:
 
 ```text
-jarvis/
+JARVIS/
 │
 ├── app/                        # Main API and Backend Core
 │   ├── api/                    # API Route Handlers
-│   │   └── v1/                 # Version 1 Endpoints (chat, health)
+│   │   └── v1/                 # Version 1 Endpoints
+│   │       ├── chat.py         # Chat conversation endpoint
+│   │       └── health.py       # Health status endpoint
 │   │
 │   ├── cognitive/              # Advanced Cognitive Reasoning Modules
-│   │   ├── infrastructure/     # Exceptions, Background jobs, Context compilers
-│   │   ├── knowledge_graph/    # Graph Extractor, Service, Exporter/Importer, Stats
-│   │   ├── profile/            # User profile preferences extractor & engine
-│   │   └── resolution/         # Alias resolution and Pronoun resolvers
+│   │   ├── infrastructure/     # Core support components
+│   │   │   ├── background_job_manager.py # Background task worker thread queue
+│   │   │   ├── context_builder.py        # Token-budgeted context compiler
+│   │   │   └── exceptions.py             # Cognitive specific exception types
+│   │   │
+│   │   ├── knowledge_graph/    # Relational entity-graph modules
+│   │   │   ├── graph_exporter.py         # Exporter for JSON, DOT, and GraphML
+│   │   │   ├── graph_extractor.py        # LLM-driven graph extraction engine
+│   │   │   ├── graph_importer.py         # Backup JSON state restorer
+│   │   │   ├── graph_reasoner.py         # Multi-hop pathfinding (BFS)
+│   │   │   ├── graph_statistics.py       # Node, edge, and density metrics
+│   │   │   └── knowledge_graph_service.py # Main graph coordinator facade
+│   │   │
+│   │   ├── profile/            # Profile preferences management
+│   │   │   └── user_profile_engine.py    # Evolving preferences engine
+│   │   │
+│   │   └── resolution/         # Cognitive context solvers
+│   │       ├── alias_resolution_engine.py # Fuzzy Levenshtein alias matcher
+│   │       └── pronoun_resolver.py       # Contextual pronoun referent resolver
 │   │
 │   ├── config/                 # Configurations Setup
 │   │   ├── settings.py         # Settings Loader (BaseSettings + toggles)
-│   │   └── logging.py          # Unified log setup handler
+│   │   └── logging.py          # Unified logging config setup
 │   │
 │   ├── core/                   # Core App Infrastructure
-│   │   ├── dependencies.py     # Injection providers
-│   │   ├── exceptions.py       # Custom exception handlers
-│   │   └── middleware.py       # Timing and correlation ID mapping
+│   │   ├── constants.py        # Constants and parameters
+│   │   ├── dependencies.py     # Injection providers (LLM, Memory, Prompt)
+│   │   ├── exceptions.py       # Central exception handler mappings
+│   │   └── middleware.py       # Timing and correlation ID middleware
 │   │
-│   ├── database/               # Database Relational Model & Repositories
-│   │   ├── repositories/       # Repositories (entity, relationship, alias, profile, event)
-│   │   ├── models.py           # SQLAlchemy tables declaration
-│   │   ├── session.py          # Async connection session generator
-│   │   └── migrations/         # Alembic database migrations scripts
+│   ├── database/               # Relational Database Mappings & Setup
+│   │   ├── repositories/       # Isolated domain queries (SQL CRUD)
+│   │   │   ├── alias_repository.py       # Entity alias operations
+│   │   │   ├── entity_repository.py      # Entity CRUD and increment mentions
+│   │   │   ├── event_repository.py       # Calendar event persistence
+│   │   │   ├── relationship_repository.py # Graph edge/relationship operations
+│   │   │   └── user_profile_repository.py # Preference database updates
+│   │   │
+│   │   ├── base.py             # Declarative SQLAlchemy Base class
+│   │   ├── migrations.py       # Database schema initialization script
+│   │   ├── models.py           # Relational schemas (ConversationModel, etc.)
+│   │   └── session.py          # Async session maker connection wrapper
 │   │
 │   ├── models/                 # Validation Schemas
-│   │   └── chat_models.py      # Request/Response data models
+│   │   └── chat_models.py      # Request/Response Pydantic models
+│   │
+│   ├── prompts/                # Prompts templates directory
+│   │   └── system_prompt.txt   # Base system prompt template instructions
 │   │
 │   ├── services/               # Core Services layer
-│   │   ├── cognitive/          # Temporal reasoning services (event extractor, time normalizer, timeline)
-│   │   ├── interfaces/         # Core abstractions
-│   │   │   └── base_chat_service.py # Chat service interface
-│   │   ├── llm/                # LLM Integration Layer (Groq, OpenAI providers)
-│   │   ├── response/           # Chat prompt building, validation, and cache layer
-│   │   ├── chat_service.py     # ChatService orchestrator
-│   │   └── factory.py          # ServiceFactory registry
+│   │   ├── cognitive/          # Calendar and schedule timeline services
+│   │   │   ├── duplicate_event_resolver.py # Overlap resolver
+│   │   │   ├── event_extractor.py          # Event extraction engine
+│   │   │   ├── event_update_detector.py    # Lifecycle update detector
+│   │   │   ├── time_normalizer.py          # Relative UTC time normalizer
+│   │   │   └── timeline_engine.py          # Timeline layout generator
+│   │   │
+│   │   ├── interfaces/         # Service Abstractions
+│   │   │   └── base_chat_service.py # ChatService abstract interface
+│   │   │
+│   │   ├── llm/                # LLM Integration Layer
+│   │   │   ├── base.py             # BaseLLM abstract interface
+│   │   │   ├── factory.py          # LLMProviderFactory provider resolver
+│   │   │   ├── generation_config.py # LLM Generation parameter configurations
+│   │   │   ├── groq_provider.py    # Groq provider Responses wrapper
+│   │   │   ├── openai_provider.py  # OpenAI provider Responses wrapper
+│   │   │   └── placeholder.py      # Placeholder mock LLM response generator
+│   │   │
+│   │   ├── response/           # Intent and Validation pipeline
+│   │   │   ├── intent_classifier.py  # Message intent classifier
+│   │   │   ├── post_processor.py     # String clean-up processor
+│   │   │   ├── prompt_builder.py     # System prompt dynamic assembly
+│   │   │   ├── response_cache.py     # TTL-based response caching
+│   │   │   └── response_validator.py # Fact-checking & length validation
+│   │   │
+│   │   ├── chat_service.py     # Main ChatService coordinator facade
+│   │   └── factory.py          # ServiceFactory DI registry
 │   │
-│   └── main.py                 # FastAPI system initializer
+│   ├── utils/                  # Helper modules
+│   │   ├── file_loader.py      # Asynchronous file reading helpers
+│   │   ├── helpers.py          # Time duration and tracking utils
+│   │   └── logger.py           # Logging logger instantiator
+│   │
+│   └── main.py                 # FastAPI lifespan setup & entry point
 │
 ├── docs/                       # Project Documentation System
 │   ├── diagrams/               # Architecture Flowcharts (Mermaid)
+│   │   ├── architecture.md
+│   │   ├── backend_flow.md
+│   │   ├── memory_flow.md
+│   │   ├── providers.md
+│   │   └── voice_flow.md
+│   │
 │   ├── phases/                 # Historical Phase records
-│   └── JARVIS_MASTER_CONTEXT.md # Master context handbook
+│   │   ├── phase1.md
+│   │   ├── phase2.md
+│   │   ├── phase3.md
+│   │   ├── phase4.md
+│   │   ├── phase5.md
+│   │   ├── phase6.md
+│   │   ├── phase7.md
+│   │   ├── phase8.md
+│   │   ├── phase9.md
+│   │   └── future.md
+│   │
+│   ├── api.md                  # API endpoints and interfaces
+│   ├── architecture.md         # Layer specifications and ADR charts
+│   ├── coding_guidelines.md    # Naming structures and standards
+│   ├── folder_structure.md     # Directory structure handbook
+│   ├── JARVIS_MASTER_CONTEXT.md # Onboarding master handbook
+│   ├── roadmap.md              # Milestones progression roadmap
+│   └── tech_stack.md           # Technologies and requirements lists
 │
 ├── memory/                     # Conversation Memory layer
-│   ├── memory_service.py       # Main Memory Service orchestrator
-│   ├── memory_factory.py       # Dependency Injection container
-│   ├── base.py                 # BaseMemory abstraction
-│   ├── in_memory.py            # Sliding deque memory manager
-│   ├── sqlite_repo.py          # SQLite direct conversation logs storage
-│   └── chroma_repo.py          # Local ChromaDB embeddings indexes storage
+│   ├── base.py                 # BaseMemory abstract class
+│   ├── base_memory.py          # Interface definitions
+│   ├── chroma_repository.py    # Local ChromaDB vector storage repository
+│   ├── conflict_resolver.py    # Memory conflict and duplicate detector
+│   ├── decay_service.py        # Lifecycle aging & vector indexing retrier
+│   ├── embedding.py            # SentenceTransformers wrapper service
+│   ├── extractor.py            # Text fact extraction manager
+│   ├── filter.py               # Memory persistence check filters
+│   ├── in_memory.py            # Sliding history memory manager
+│   ├── llm_extractor.py        # LLM-based fact extraction wrapper
+│   ├── memory_factory.py       # Memory DI container
+│   ├── memory_service.py       # SQLite & ChromaDB coordinate service
+│   ├── repository.py           # Abstract BaseMemoryRepository definitions
+│   ├── scorer.py               # Importance value calculator
+│   ├── search.py               # SQL/Vector hybrid search service
+│   ├── sqlite_repository.py    # SQLite dialogue log repository
+│   ├── test_memory.py          # Memory verification tests
+│   └── test_personality.py     # Personality constraint tests
 │
 ├── tests/                      # Testing Framework Suite
-│   ├── cognitive/              # Advanced tests (test_event_lifecycle.py, test_graph_engine.py)
-│   └── ...                     # Core engine unit tests
+│   └── cognitive/              # Integration and unit tests
+│       ├── test_event_lifecycle.py # Calendar update & duplicate tests
+│       ├── test_graph_engine.py    # Knowledge graph & alias tests
+│       └── test_temporal_engine.py # Event timeline database tests
 │
 ├── voice/                      # Voice Interface module
-│   ├── bin/                    # Standalone audio binaries (Rhasspy Piper)
-│   ├── models/                 # Audio ONNX model weights
-│   ├── providers/              # STT and TTS Engines (piper_provider, stt_provider)
+│   ├── bin/                    # Standalone audio binaries (gitignored)
+│   ├── models/                 # Audio ONNX model weights (gitignored)
+│   ├── providers/              # STT and TTS Engines
+│   │   ├── piper_provider.py   # Piper speech synthesizer
+│   │   ├── stt_factory.py      # Speech-to-Text provider factory
+│   │   ├── stt_provider.py     # Faster-Whisper transcriber
+│   │   └── tts_factory.py      # Text-to-Speech provider factory
+│   │
+│   ├── config.py               # Voice interface configurations
+│   ├── download_models.py      # Download models and binaries
+│   ├── logger.py               # Voice-specific logging configuration
 │   ├── microphone.py           # sounddevice audio PTT recorder
-│   ├── voice_service.py        # Pipeline orchestrator
-│   └── voice_controller.py     # Console audio PTT helper
+│   ├── session.py              # Voice conversation session manager
+│   ├── test_voice.py           # Voice engine tests
+│   ├── voice_controller.py     # Console audio PTT helper
+│   └── voice_service.py        # Pipeline orchestrator
 │
-├── .env                        # Local configuration settings (Secret)
 ├── .env.example                # Configuration template
-├── run.py                      # Uvicorn entry point script
-└── requirements.txt            # Package list
+├── .gitignore                  # Git settings
+├── README.md                   # Setup guide
+├── requirements.txt            # Package list
+└── run.py                      # Server starter script
 ```
 
 ---
@@ -93,55 +194,49 @@ jarvis/
 * **Responsibilities**: Receives HTTP requests, validates Pydantic schemas, and routes execution to injected services.
 * **Key Files**: `chat.py` (chat REST controller), `health.py` (health checks).
 * **Dependencies**: `app/models/`, `app/services/factory.py`.
-* **Future Extension Point**: To add a new REST API endpoint, create a route handler file in this folder and register it in `app/main.py`.
 
 ### Directory: `app/cognitive/`
 * **Purpose**: Contains advanced multi-hop relational context reasoning.
-* **Responsibilities**: Entity fuzzy aliasing, pronoun reference resolution, profile preference evolutions, and export visualizations.
+* **Responsibilities**: Entity fuzzy aliasing, pronoun reference resolution, profile preference updates, and graph export visualizations.
 * **Key Files**:
-  * `resolution/alias_resolution_engine.py` (resolves spelling variations/aliases).
-  * `knowledge_graph/knowledge_graph_service.py` (coordinates persistent entity graph operations).
-  * `profile/user_profile_engine.py` (manages preference lists).
+  * `resolution/alias_resolution_engine.py` (fuzzy name mapping).
+  * `resolution/pronoun_resolver.py` (pronoun reference resolution).
+  * `knowledge_graph/knowledge_graph_service.py` (main graph service facade).
+  * `profile/user_profile_engine.py` (evolving user profile keys).
 * **Dependencies**: `app/database/repositories/`, `app/cognitive/infrastructure/`, `app/services/llm/`.
-* **Future Extension Point**: To add a new cognitive resolver (e.g. sentiment tracking), add a submodule subfolder under this directory.
 
 ### Directory: `app/database/`
-* **Purpose**: Coordinates physical relational storage connections and mappings.
-* **Responsibilities**: Executing transactional mutations and abstracting SQL statements.
+* **Purpose**: Coordinates relational storage connections.
+* **Responsibilities**: Exposing transactional operations and translating domain models to SQL queries.
 * **Key Files**:
-  * `models.py` (SQL tables definitions).
+  * `models.py` (SQL tables declarations).
   * `session.py` (async transactional session maker).
-  * `repositories/entity_repository.py` (handles entity-merge audits).
+  * `migrations.py` (automatic database schema initializations).
 * **Dependencies**: `app/config/settings.py`.
-* **Future Extension Point**: To support another relational database engine (like MySQL), modify parameters inside `session.py` and run migrations via `migrations/` scripts.
 
 ### Directory: `app/services/`
-* **Purpose**: Orchestrates central domain operations.
-* **Responsibilities**: Formatting systems prompts, checking validation limits, caching responses, and parsing temporal timelines.
+* **Purpose**: Orchestrates central business logic.
+* **Responsibilities**: Formatting prompts, validating answers, and parsing calendar schedules.
 * **Key Files**:
-  * `chat_service.py` (main conversation coordinator).
-  * `cognitive/timeline_engine.py` (timeline builder).
-  * `response/prompt_builder.py` (prompt assembly).
+  * `chat_service.py` (main conversation pipeline orchestrator).
+  * `cognitive/timeline_engine.py` (calendar event viewer generator).
+  * `response/prompt_builder.py` (dynamic prompt builder).
 * **Dependencies**: `app/cognitive/`, `memory/`.
-* **Future Extension Point**: To add new conversation intent processors, register them within `app/services/chat_service.py` and `app/services/response/prompt_builder.py`.
 
 ### Directory: `memory/`
-* **Purpose**: Manages long-term retrieval pipelines and vector indexes.
-* **Responsibilities**: Scoring memory queries, decaying inactive records, and storing semantic indexes.
+* **Purpose**: Manages dialogue logs and vector similarity mappings.
+* **Responsibilities**: Storing relational dialog turns, semantic indexing, and background aging tasks.
 * **Key Files**:
-  * `memory_service.py` (hierarchical recall controller).
-  * `memory_factory.py` (caching DI container).
-  * `sqlite_repo.py` (saves raw logs).
-  * `chroma_repo.py` (saves embedding dimensions).
+  * `memory_service.py` (hierarchical recall coordinator).
+  * `sqlite_repository.py` (direct SQL dialog logs repository).
+  * `chroma_repository.py` (local vector embedding client).
 * **Dependencies**: `app/database/repositories/`.
-* **Future Extension Point**: To add external vector service providers (like Qdrant), write a new client class implementing `BaseMemoryRepository` in this directory.
 
 ### Directory: `voice/`
 * **Purpose**: Audio transcription and voice synthesis.
 * **Responsibilities**: Captures local device microphone streams and manages sound playback threads.
 * **Key Files**:
   * `microphone.py` (sounddevice listener).
-  * `voice_service.py` (PTT pipeline builder).
+  * `voice_service.py` (PTT pipeline orchestrator).
+  * `download_models.py` (downloads Piper binary & Whisper weights).
 * **Dependencies**: `app/services/factory.py`.
-* **Future Extension Point**: To swap synthesis providers, register the new client model in `voice/providers/`.
-

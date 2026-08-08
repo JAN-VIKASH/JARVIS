@@ -1,27 +1,16 @@
-# Future Phases: GUI, Multi-Agent, and Cloud Sync
+# Future Phases: Multi-Agent and Cloud Sync
 
 * **Last Updated**: 2026-08-08
-* **Latest Completed Phase**: Phase 5.3 (User Preferences, Habits & Tasks)
-* **Next Phase**: Phase 6 (Desktop Automation) [PLANNED]
+* **Latest Completed Phase**: Phase 11 (Desktop Graphical User Interface)
+* **Next Phase**: Phase 12 (Multi-Agent System) [PLANNED]
 * **Status**: Planned
-* **Version**: v0.5.3 (Roadmap)
+* **Version**: v1.1
 
 ---
 
-This document outlines the plans for Phases 10, 11, and 12 of the JARVIS project.
+This document outlines the plans for Phase 12 and Phase 13 of the JARVIS project.
 
-## Phase 10: Desktop Graphical User Interface (GUI) (v1.0)
-* **Objective**: Replace CLI scripts with a desktop application framework (like Electron or Tauri) to present visual HUD controls, chat logs, and settings parameters.
-* **Features**:
-  * Clean UI themed in dark modes (resembling Tony Stark's hologram design).
-  * Real-time audio waveform visualizer showing microphone capture states.
-  * System notification integration to alerts the user on subtask completions.
-  * Desktop settings panel to manage API credentials, select voice models, and toggle wake-word settings.
-* **Verification**: Verify that the application initializes on Windows/macOS and correctly connects to the local FastAPI server.
-
----
-
-## Phase 11: Multi-Agent System (v1.1)
+## Phase 12: Multi-Agent System (v1.2)
 * **Objective**: Enable complex workflow automation by orchestrating dedicated subagents to divide and conquer large instructions.
 * **Features**:
   * Central Planner Agent mapping actions to dedicated subagent nodes.
@@ -31,7 +20,7 @@ This document outlines the plans for Phases 10, 11, and 12 of the JARVIS project
 
 ---
 
-## Phase 12: Cloud Sync (v1.2)
+## Phase 13: Cloud Sync (v1.3)
 * **Objective**: Securely synchronize conversation logs, persistent memory metrics, and configuration profiles across multiple personal computers.
 * **Features**:
   * End-to-end encrypted (E2EE) data synchronization channel.

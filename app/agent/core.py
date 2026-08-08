@@ -59,24 +59,27 @@ class AgentService:
                 # Check user confirmation choice
                 if q_lower in ["yes", "confirm", "go ahead", "y", "okay", "proceed", "sure"]:
                     logger.info(f"User confirmed step #{step_id} in plan {plan_id}. Resuming execution.")
-                    
+
                     cmd = pending["command"]
                     params = pending["parameters"]
                     del confirming_service._pending_confirmations[session_id]
-                    
+
                     try:
                         step.status = "RUNNING"
                         step.start_time = time.time()
+                        self.executor._publish_agent_update(plan)
+
                         if confirming_service == self.browser_service:
                             result_str = await self.browser_service._run_browser_action(session_id, cmd, params)
                         else:
                             result_str = await self.desktop_service._run_tool_command(cmd, params)
                         step.end_time = time.time()
-                        
+
                         if "error" in result_str.lower():
                             step.status = "FAILED"
                             step.error = result_str
                             plan.status = "FAILED"
+                            self.executor._publish_agent_update(plan)
                             return f"Agent execution failed at confirmed step #{step_id}: {result_str}"
 
                         # Verification check
@@ -85,14 +88,17 @@ class AgentService:
                             step.status = "FAILED"
                             step.error = "Verification failed after user confirmation."
                             plan.status = "FAILED"
+                            self.executor._publish_agent_update(plan)
                             return f"Agent execution failed: verified state not reached for step #{step_id}."
 
                         step.status = "COMPLETED"
                         step.result = result_str
+                        self.executor._publish_agent_update(plan)
                     except Exception as e:
                         step.status = "FAILED"
                         step.error = str(e)
                         plan.status = "FAILED"
+                        self.executor._publish_agent_update(plan)
                         return f"Agent execution failed during confirmed step: {e}"
 
                     # Resume plan execution loop
@@ -101,6 +107,7 @@ class AgentService:
                             return await self.executor.execute_plan(plan, session_id)
                     except asyncio.TimeoutError:
                         plan.status = "FAILED"
+                        self.executor._publish_agent_update(plan)
                         return "Goal execution aborted: total execution timeout exceeded."
 
                 elif q_lower in ["no", "cancel", "stop", "n", "dont", "don't"]:
@@ -110,6 +117,7 @@ class AgentService:
                         step.status = "CANCELLED"
                         step.error = "User cancelled execution."
                     plan.status = "FAILED"
+                    self.executor._publish_agent_update(plan)
                     return "Plan execution cancelled."
 
         # 2. Plan a new complex goal

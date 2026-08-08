@@ -135,3 +135,26 @@ class ServiceFactory:
             ServiceFactory._vision_service = VisionService()
         return ServiceFactory._vision_service
 
+    _voice_service = None
+
+    @staticmethod
+    def get_voice_service():
+        """
+        Resolves and returns the active VoiceService instance (singleton).
+        """
+        if ServiceFactory._voice_service is None:
+            from voice.voice_service import VoiceService
+            from voice.providers.stt_factory import STTProviderFactory
+            from voice.providers.tts_factory import TTSProviderFactory
+
+            stt = STTProviderFactory.get_provider()
+            tts = TTSProviderFactory.get_provider()
+            chat_service = ServiceFactory.get_chat_service()
+
+            ServiceFactory._voice_service = VoiceService(
+                stt=stt,
+                tts=tts,
+                chat_service=chat_service
+            )
+        return ServiceFactory._voice_service
+

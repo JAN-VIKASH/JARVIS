@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JARVIS HUD - Advanced Assistant</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="hud-container">
+        <!-- Hologram Background Grids -->
+        <div class="hologram-grid"></div>
+        <div class="hologram-scanline"></div>
+
+        <!-- Header Panel -->
+        <header class="hud-header">
+            <div class="header-logo">
+                <span class="logo-text">J.A.R.V.I.S.</span>
+                <span class="logo-sub">SYSTEM ACTIVE</span>
+            </div>
+            <div class="header-stats">
+                <div class="stat-box">
+                    <span class="stat-label">HOST:</span>
+                    <span class="stat-value text-cyan">127.0.0.1</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">SSE STATUS:</span>
+                    <span id="sse-status" class="stat-value text-red">DISCONNECTED</span>
+                </div>
+                <button id="settings-toggle-btn" class="hud-btn glow-cyan">SETTINGS</button>
+            </div>
+        </header>
+
+        <!-- Main Body -->
+        <main class="hud-body">
+            <!-- Left Panel: Voice Control & Visualizer -->
+            <section class="hud-panel left-panel">
+                <div class="panel-header">VOICE SUBSYSTEM</div>
+                <div class="panel-content">
+                    <div class="voice-status-card">
+                        <div class="voice-indicator-glow" id="voice-indicator"></div>
+                        <div class="voice-details">
+                            <div class="voice-mode-title">OPERATING MODE</div>
+                            <div id="voice-state-text" class="voice-state">INACTIVE</div>
+                        </div>
+                    </div>
+
+                    <!-- Canvas for Audio Waveform -->
+                    <div class="visualizer-wrapper">
+                        <canvas id="waveform-canvas" width="400" height="150"></canvas>
+                        <div id="visualizer-overlay" class="visualizer-overlay">MIC INACTIVE</div>
+                    </div>
+
+                    <div class="voice-actions">
+                        <button id="voice-start-btn" class="hud-btn full-width glow-green">ACTIVATE VOICE</button>
+                        <button id="voice-stop-btn" class="hud-btn full-width glow-red hidden">DEACTIVATE VOICE</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Center Panel: Chat logs -->
+            <section class="hud-panel center-panel">
+                <div class="panel-header">COMMUNICATION DIRECTORY</div>
+                <div class="panel-content chat-content-wrapper">
+                    <div id="chat-logs" class="chat-logs">
+                        <div class="chat-message jarvis">
+                            <span class="message-sender">JARVIS:</span>
+                            <p class="message-text">System initialization completed. Awaiting commands, User.</p>
+                        </div>
+                    </div>
+                    <form id="chat-input-form" class="chat-input-form">
+                        <input type="text" id="chat-input" placeholder="Transmit direct text command..." autocomplete="off" required>
+                        <button type="submit" class="hud-btn glow-cyan">TRANSMIT</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Right Panel: Agent Planning execution logs -->
+            <section class="hud-panel right-panel">
+                <div class="panel-header">COGNITIVE TASK PLANNING</div>
+                <div class="panel-content agent-content-wrapper">
+                    <div id="agent-plans-container" class="agent-plans-container">
+                        <div class="no-plans-text">No active cognitive plans generated.</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Settings Modal -->
+        <div id="settings-modal" class="hud-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span>SYSTEM CONFIGURATION</span>
+                    <button id="settings-close-btn" class="close-btn">&times;</button>
+                </div>
+                <form id="settings-form" class="settings-form">
+                    <div class="form-group">
+                        <label for="wake-word-enabled">Wake Word Loop ("Hey Jarvis")</label>
+                        <select id="wake-word-enabled" class="hud-select">
+                            <option value="false">Disabled (Push-to-Talk Fallback)</option>
+                            <option value="true">Enabled (Continuous Listen)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="wake-word-threshold">Wake Word Threshold</label>
+                        <input type="number" id="wake-word-threshold" min="0.1" max="1.0" step="0.05" class="hud-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="wake-word">Wake Word Keyword</label>
+                        <input type="text" id="wake-word" class="hud-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="voice-name">Speech Synthesis Voice</label>
+                        <input type="text" id="voice-name" class="hud-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="stt-provider">Speech-to-Text Provider</label>
+                        <select id="stt-provider" class="hud-select">
+                            <option value="faster_whisper">Faster-Whisper (Local)</option>
+                            <option value="openai">OpenAI (Cloud)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="tts-provider">Text-to-Speech Provider</label>
+                        <select id="tts-provider" class="hud-select">
+                            <option value="piper">Piper (Local)</option>
+                            <option value="openai">OpenAI (Cloud)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="stt-model">STT Model Version</label>
+                        <input type="text" id="stt-model" class="hud-input">
+                    </div>
+                    <button type="submit" class="hud-btn glow-green full-width">SAVE CONFIGURATION</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

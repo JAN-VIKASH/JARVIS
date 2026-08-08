@@ -17,13 +17,33 @@ class VoiceSession:
     def start_recording(self):
         self.recording_state = True
         self.conversation_state = "listening"
+        try:
+            from app.core.gui_bus import GUIEventBus
+            GUIEventBus.publish("voice_status", {"active": True, "state": "listening"})
+        except Exception:
+            pass
 
     def stop_recording(self):
         self.recording_state = False
         self.conversation_state = "processing"
+        try:
+            from app.core.gui_bus import GUIEventBus
+            GUIEventBus.publish("voice_status", {"active": True, "state": "processing"})
+        except Exception:
+            pass
 
     def set_speaking(self):
         self.conversation_state = "speaking"
+        try:
+            from app.core.gui_bus import GUIEventBus
+            GUIEventBus.publish("voice_status", {"active": True, "state": "speaking"})
+        except Exception:
+            pass
 
     def set_idle(self):
         self.conversation_state = "idle"
+        try:
+            from app.core.gui_bus import GUIEventBus
+            GUIEventBus.publish("voice_status", {"active": True, "state": "idle"})
+        except Exception:
+            pass

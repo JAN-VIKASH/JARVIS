@@ -36,6 +36,7 @@ class ExecutionEngine:
         """
         plan.status = "EXECUTING"
         plan.updated_at = time.time()
+        self._publish_agent_update(plan)
 
         for step in plan.steps:
             # 1. Skip if already completed
@@ -57,12 +58,14 @@ class ExecutionEngine:
             if blocked:
                 step.status = "BLOCKED"
                 logger.info(f"Step #{step.step_id} is BLOCKED due to prerequisites.")
+                self._publish_agent_update(plan)
                 continue
 
             # 3. Transition to RUNNING
             step.status = "RUNNING"
             step.start_time = time.time()
             logger.info(f"Running step #{step.step_id}: {step.description}")
+            self._publish_agent_update(plan)
 
             # 4. Validate parameters against tool schemas
             is_valid, err = self.tool_selector.validate_tool_invocation(step.selected_tool, step.parameters)
@@ -74,6 +77,7 @@ class ExecutionEngine:
                 plan.status = "FAILED"
                 self._propagate_blocked_status(plan)
                 plan.updated_at = time.time()
+                self._publish_agent_update(plan)
                 return f"Agent execution failed at step #{step.step_id}: {err}"
 
             # 5. Safety Tier Check
@@ -94,6 +98,7 @@ class ExecutionEngine:
                 plan.status = "FAILED"
                 self._propagate_blocked_status(plan)
                 plan.updated_at = time.time()
+                self._publish_agent_update(plan)
                 return f"Agent execution failed at step #{step.step_id}: {step.error}"
 
             if tier == "CONFIRMATION_REQUIRED":
@@ -111,10 +116,12 @@ class ExecutionEngine:
                 }
                 
                 logger.info(f"Step #{step.step_id} requires confirmation. Pausing plan.")
+                self._publish_agent_update(plan)
                 return f"I need your confirmation to proceed with the action: [{step.selected_tool}] using parameters {step.parameters}. Please say 'yes' to confirm or 'no' to cancel."
 
             # 6. Execute step tool command with retry-loop
             await self._run_step_with_retries(step, session_id)
+            self._publish_agent_update(plan)
 
             step.end_time = time.time()
             if step.status == "FAILED":
@@ -122,6 +129,7 @@ class ExecutionEngine:
                 plan.status = "FAILED"
                 self._propagate_blocked_status(plan)
                 plan.updated_at = time.time()
+                self._publish_agent_update(plan)
                 return f"Agent execution failed at step #{step.step_id}: {step.error}"
 
         # Check if all steps completed
@@ -129,11 +137,36 @@ class ExecutionEngine:
         plan.status = "SUCCESS" if all_ok else "FAILED"
         self._propagate_blocked_status(plan)
         plan.updated_at = time.time()
+        self._publish_agent_update(plan)
         
         if plan.status == "SUCCESS":
             return "Goal completed successfully."
         else:
             return "Goal execution failed."
+
+    def _publish_agent_update(self, plan: AgentPlan) -> None:
+        """
+        Publish agent plan status transitions to GUIEventBus synchronously and non-blockingly.
+        """
+        try:
+            from app.core.gui_bus import GUIEventBus
+            GUIEventBus.publish("agent_status", {
+                "plan_id": plan.plan_id,
+                "goal": plan.goal,
+                "status": plan.status,
+                "steps": [
+                    {
+                        "step_id": s.step_id,
+                        "description": s.description,
+                        "status": s.status,
+                        "selected_tool": s.selected_tool,
+                        "result": s.result,
+                        "error": s.error
+                    } for s in plan.steps
+                ]
+            })
+        except Exception:
+            pass
 
     def _propagate_blocked_status(self, plan: AgentPlan):
         """

@@ -72,9 +72,17 @@ app.add_middleware(
 )
 
 # API Routers
+from fastapi.staticfiles import StaticFiles
+from app.api.v1 import gui_endpoints
+
 app.include_router(health.router, prefix=settings.API_V1_STR)
 app.include_router(chat.router, prefix=settings.API_V1_STR)
+app.include_router(gui_endpoints.router, prefix=settings.API_V1_STR)
 
 # Direct root-level fallbacks/aliases to satisfy "GET /health" and "POST /chat" exactly:
 app.include_router(health.router)
 app.include_router(chat.router)
+app.include_router(gui_endpoints.router)
+
+# Mount frontend GUI
+app.mount("/gui", StaticFiles(directory="frontend", html=True), name="gui")

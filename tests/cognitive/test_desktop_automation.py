@@ -74,14 +74,44 @@ class MockDesktopAutomationTool(DesktopAutomationTool):
         return f"[Mock] Screenshot saved to {dest_path}"
 
 
+from app.services.llm.base import BaseLLM
+from app.models.chat_models import LLMResult
+
+class MockDesktopLLM(BaseLLM):
+    async def generate(self, prompt: str) -> str:
+        return "Mock response"
+        
+    async def generate_response(self, request, system_prompt, history=None, stream=False, config=None):
+        msg = request.message.lower()
+        resp = "{}"
+        if "screenshot" in msg:
+            resp = '{"command": "take_screenshot", "parameters": {}}'
+        elif "move mouse" in msg:
+            resp = '{"command": "move_mouse", "parameters": {"x": 500, "y": 300}}'
+        elif "open notepad" in msg or "launch notepad" in msg:
+            resp = '{"command": "launch_app", "parameters": {"app_name": "notepad"}}'
+        elif "open chrome" in msg or "launch chrome" in msg:
+            resp = '{"command": "launch_app", "parameters": {"app_name": "chrome"}}'
+        elif "delete file" in msg:
+            resp = '{"command": "delete_file", "parameters": {"path": "C:\\\\Windows\\\\System32"}}'
+        elif "yes" in msg:
+            resp = "yes"
+            
+        return LLMResult(
+            response=resp,
+            input_tokens=10,
+            output_tokens=10,
+            total_tokens=20,
+            provider="mock",
+            model="mock",
+            latency=0.1
+        )
+
 class TestDesktopAutomation(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         await init_db()
         self.mock_tool = MockDesktopAutomationTool()
-        
-        # Instantiate service injecting mock tool
-        # Resolves LLM mock/placeholder from factory
-        self.llm = ServiceFactory.get_llm()
+        self.llm = MockDesktopLLM()
         self.desktop_service = DesktopAutomationService(llm=self.llm, desktop_tool=self.mock_tool)
         
         # Override the ServiceFactory singleton temporarily for integration tests

@@ -90,6 +90,16 @@ class IntentClassifier:
         if any(re.search(p, q_lower) for p in event_patterns):
             return "event_query"
 
+        # Complex Goal / Agentic Loop Classification (Phase 7)
+        complex_patterns = [
+            r"\b(then|and\s+then|after\s+that|sequentially|multiple\s+steps|complex\s+plan)\b",
+            r"\b(open|launch|run|click|type|write|focus|close)\b.+\b(then|afterwards|and\s+also|finally)\b",
+            r"\bexecute\s+goal\b",
+            r"\brun\s+plan\b"
+        ]
+        if any(re.search(p, q_lower) for p in complex_patterns):
+            return "complex_goal"
+
         # Desktop Action Classification (Phase 6)
         desktop_patterns = [
             r"\b(open|launch)\s+(the\s+)?(notepad|chrome|vscode|explorer)\b",

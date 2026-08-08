@@ -93,3 +93,19 @@ class ServiceFactory:
             )
         return ServiceFactory._memory_summary_service
 
+    _agent_service = None
+
+    @staticmethod
+    def get_agent_service():
+        """
+        Resolves and returns the active AgentService instance (singleton).
+        """
+        if ServiceFactory._agent_service is None:
+            from app.agent.core import AgentService
+            ServiceFactory._agent_service = AgentService(
+                llm=ServiceFactory.get_llm(),
+                cognitive_reasoner=ServiceFactory.get_cognitive_reasoner(),
+                desktop_service=ServiceFactory.get_desktop_automation_service()
+            )
+        return ServiceFactory._agent_service
+

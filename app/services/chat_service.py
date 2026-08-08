@@ -46,8 +46,14 @@ class ChatService(BaseChatService):
         # Intercept desktop action pending confirmations
         from app.services.factory import ServiceFactory
         desktop_service = ServiceFactory.get_desktop_automation_service()
+        agent_service = ServiceFactory.get_agent_service()
+        
         if session_id in desktop_service._pending_confirmations:
-            result = await desktop_service.execute_action(session_id, request.message)
+            pending = desktop_service._pending_confirmations[session_id]
+            if "agent_plan_id" in pending:
+                result = await agent_service.execute_goal(request.message, session_id)
+            else:
+                result = await desktop_service.execute_action(session_id, request.message)
             await self.memory.add_message(session_id, "user", request.message)
             await self.memory.add_message(session_id, "assistant", result)
             return result
@@ -57,6 +63,13 @@ class ChatService(BaseChatService):
         intent = IntentClassifier.classify(request.message)
         classification_latency = time.perf_counter() - classification_start
         
+        # Intercept new complex goal agent runs
+        if intent == "complex_goal":
+            result = await agent_service.execute_goal(request.message, session_id)
+            await self.memory.add_message(session_id, "user", request.message)
+            await self.memory.add_message(session_id, "assistant", result)
+            return result
+            
         # Intercept new desktop actions
         if intent == "desktop_action":
             result = await desktop_service.execute_action(session_id, request.message)

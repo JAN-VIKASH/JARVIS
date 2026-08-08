@@ -1,10 +1,10 @@
 # JARVIS Roadmap
 
 * **Last Updated**: 2026-08-08
-* **Latest Completed Phase**: Phase 6 (Desktop Automation)
-* **Next Phase**: Phase 7 (Browser Automation)
+* **Latest Completed Phase**: Phase 7 (Agentic Intelligence)
+* **Next Phase**: Phase 8 (Browser Automation)
 * **Status**: Freeze
-* **Version**: v0.6
+* **Version**: v0.7
 
 ---
 
@@ -14,7 +14,7 @@
 [✅ Phase 1: Foundation] ──> [✅ Phase 2: Groq LLM] ──> [✅ Phase 3: Voice PTT]
                                                                 │
                                                                 v
-[Planned Phase 8: Vision] <── [⚡ Next Phase 7: Browser] <── [✅ Phase 6: Desktop] <── [✅ Reconciled Phase 5: Cognitive Core] <── [✅ Phase 5.3: Habits & Tasks] <── [✅ Phase 5.2: Relational Graph] <── [✅ Phase 5.1.1: Event Lifecycle] <── [✅ Phase 5.1: Event Engine] <── [✅ Phase 4: Long Memory]
+[Planned Phase 9: Vision] <── [⚡ Next Phase 8: Browser] <── [✅ Phase 7: Agentic] <── [✅ Phase 6: Desktop] <── [✅ Reconciled Phase 5: Cognitive Core] <── [✅ Phase 5.3: Habits & Tasks] <── [✅ Phase 5.2: Relational Graph] <── [✅ Phase 5.1.1: Event Lifecycle] <── [✅ Phase 5.1: Event Engine] <── [✅ Phase 4: Long Memory]
 ```
 
 ---
@@ -124,29 +124,39 @@
   - Safe in-memory confirmation state manager expiring after 120 seconds.
   - Verified target window focusing guards preventing input leakage.
 
+### ✅ Phase 7: Agentic Intelligence (v0.7)
+* **Goal**: Autonomous plan-execute-verify-recover agent loops.
+* **Features**:
+  - `PlanningEngine` decomposing complex user goals into dependency-linked steps.
+  - `ToolSelector` checking parameter constraints against `tools/registry.py` schemas.
+  - `ExecutionEngine` driving agent step execution with timeout safeguards.
+  - `ReflectionEngine` checking GUI windows to verify successful state changes.
+  - `RecoveryEngine` managing retry backoffs and focusing recovery targets.
+  - Decoupled `AgentService` singletons integrated cleanly with `ChatService` routing.
+
 ---
 
 ## Future Roadmap
 
-### ⚡ Next Phase 7: Browser Automation (v0.7) [PLANNED]
+### ⚡ Next Phase 8: Browser Automation (v0.8) [PLANNED]
 * **Goal**: Browser scraping and UI interactions.
 * **Details**: Integrate Playwright to navigate websites, complete checkouts, and pull dynamic HTML assets.
 
-### Phase 8: Vision (v0.8) [PLANNED]
+### Phase 9: Vision (v0.9) [PLANNED]
 * **Goal**: OCR and image interpretation.
 * **Details**: Local image processing pipelines via ONNX models to analyze screen snapshots.
 
-### Phase 9: Wake Word (v0.9) [PLANNED]
+### Phase 10: Wake Word (v1.0) [PLANNED]
 * **Goal**: Continuously listening hotword service.
 * **Details**: Add background thread audio processing to capture wake trigger phrase ("Hey Jarvis") using local, lightweight engine.
 
-### Phase 10: Desktop Graphical User Interface (v1.0) [PLANNED]
+### Phase 11: Desktop Graphical User Interface (v1.1) [PLANNED]
 * **Goal**: Stunning visual HUD.
 * **Details**: Create clean desktop panel (using electron or Tauri) showing agent status and chat records.
 
-### Phase 11: Multi-Agent System (v1.1) [PLANNED]
+### Phase 12: Multi-Agent System (v1.2) [PLANNED]
 * **Goal**: Task division among subagents.
 * **Details**: Orchestrate specialized subagents to tackle complex workflows parallelly.
 
-### Phase 12: Cloud Sync (v1.2) [PLANNED]
+### Phase 13: Cloud Sync (v1.3) [PLANNED]
 * **Goal**: Secured database and state synchronization across multiple user machines.

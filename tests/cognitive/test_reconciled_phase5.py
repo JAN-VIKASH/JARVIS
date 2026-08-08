@@ -37,14 +37,15 @@ class MockLLM(BaseLLM):
 
     async def generate_response(self, request, system_prompt, history=None, stream=False, config=None):
         self.calls.append(system_prompt)
-        from app.services.llm.groq_provider import GenerationResult
-        return GenerationResult(
-            text="Mock Chat Response",
+        from app.models.chat_models import LLMResult
+        return LLMResult(
+            response="Mock Chat Response",
             input_tokens=10,
             output_tokens=10,
             total_tokens=20,
             provider="mock",
-            model="mock"
+            model="mock",
+            latency=0.1
         )
 
 class TestReconciledPhase5(unittest.IsolatedAsyncioTestCase):
